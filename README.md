@@ -1,7 +1,7 @@
 # shadow
 
 Shadow is a dependency-free base class inheriting from HTMLElement - makes Web
-Components and ShadowRoot simple and fun. Faster than `lit-element`!
+Components and ShadowRoot simple and fun.
 
 ## Quick Start
 
