@@ -130,9 +130,9 @@ custom element's tag name automatically.
 
 #### connectedCallback()
 
-A native custom elements' lifecycle callback:
-https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements
-If you want to modify this callback you must call super.connectedCallback()
+A native custom elements'
+[lifecycle callback](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements).
+If you want to modify this callback you must call `super.connectedCallback()`
 inside of it.
 
 #### attributeChangedCallback(name: string, oldValue: Attribute, newValue: Attribute)
