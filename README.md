@@ -8,8 +8,9 @@ native Custom Elements simple and fun.
 Compile `example/my_example.ts`:
 
 ```bash
-# Add a tsconfig.json with DOM types to enable type checking
 deno bundle --no-check example/my_example.ts > example/my_example.js
+# Add a tsconfig.json with DOM types to enable type checking:
+# deno bundle --config tsconfig.json example/my_example.ts > example/my_example.js
 ```
 
 Serve the `index.html` file:
