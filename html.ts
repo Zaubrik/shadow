@@ -160,7 +160,7 @@ function cleanUpString(str: string) {
  * this.dom object. All matching class elements or one id element. E.g. to the
  * button element of `<div><button @id="myButton"></button></div>` can be referred
  * with `this.dom.id["myButton"]`.
- * 2. This allows you to add EventListeners, e.g. click=${this.clickHandler},
+ * 2. This allows you to add EventListeners, e.g. `click=${this.clickHandler}`,
  * which will be added with the native addEventListener method under the hood.
  * You don't need arrow functions because because we use `bind(this)`.
  */

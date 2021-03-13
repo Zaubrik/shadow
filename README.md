@@ -1,21 +1,27 @@
 # shadow
 
-Shadow is a dependency-free base class inheriting from HTMLElement - makes Web
-Components and ShadowRoot simple and fun.
+Shadow is a dependency-free base class inheriting from HTMLElement - makes
+native Custom Elements simple and fun.
 
 ## Quick Start
 
-Compile the `my_example.ts` by running:
+Compile `example/my_example.ts`:
 
 ```bash
 # Add a tsconfig.json with DOM types to enable type checking
 deno bundle --no-check example/my_example.ts > example/my_example.js
 ```
 
-Serve the `index.html`:
+Serve the `index.html` file:
 
 ```bash
 deno run --allow-net --allow-read https://deno.land/std/http/file_server.ts example/
+```
+
+Print the commented API:
+
+```bash
+deno doc mod.ts
 ```
 
 ## Example

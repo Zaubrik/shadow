@@ -29,7 +29,6 @@ export function customElement(
       tagName = tagName
         ? tagName
         : convertCamelToDash(clazz.name.replace(/\d+$/, ""));
-      console.log("bbbbbbbb", clazz, tagName);
       Object.defineProperty(clazz, "is", {
         value: tagName,
       });
