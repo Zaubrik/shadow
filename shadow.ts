@@ -77,7 +77,6 @@ function isNull(input: unknown): input is null {
 export class Shadow extends HTMLElement {
   private waitingList = new Set<string>();
   private accessorsStore = new Map<string, unknown>();
-  private renderingCount = 0;
   readonly argsFromPropertyDecorator?: Required<PropertyAndOptions[]>;
   connected: boolean = false;
   shadowRoot!: ShadowRoot;
@@ -87,9 +86,9 @@ export class Shadow extends HTMLElement {
  */
   dom: Dom = { id: {}, class: {} };
 
-  constructor(init: ShadowRootInit = { mode: "open" }) {
+  constructor() {
     super();
-    this.attachShadow(init);
+    this.attachShadow({ mode: "open" });
     this.addEventListener("_update", () => {
       this.firstUpdated();
     }, { once: true });
@@ -249,12 +248,6 @@ export class Shadow extends HTMLElement {
     this.shadowRoot.innerHTML = htmlString;
     (this.constructor as typeof Shadow).styles.forEach((template) =>
       cloneTemplateIntoParent(template, this.shadowRoot)
-    );
-    this.renderingCount++;
-    console.log(
-      "INNERHTML CHANGED!",
-      this.renderingCount,
-      (this.constructor as typeof Shadow).is,
     );
     selectorAndKindAndEvents.forEach(
       ({ kind, selector, eventsAndListeners }) => {
