@@ -7,7 +7,7 @@ import type { PropertyOptions } from "./decorators.ts";
  * Represents the type of HTML attributes.
  */
 export type Attribute = string | null;
-type PropertyAndOptions = {
+type PropertyAndPropertyOptions = {
   property: string;
 } & PropertyOptions;
 type Dom = {
@@ -16,43 +16,11 @@ type Dom = {
 };
 
 /**
- * Appends an HTMLTemplateElement as element to a parent.
- * If you pass an optional sibling it will insert the new element before it.
- */
-export function cloneTemplateIntoParent(
-  template: HTMLTemplateElement,
-  parent: HTMLElement | ShadowRoot,
-  sibling?: HTMLElement,
-): HTMLTemplateElement {
-  if (sibling) parent.insertBefore(template.content.cloneNode(true), sibling);
-  else parent.append(template.content.cloneNode(true));
-  return template;
-}
-
-/**
  * Throws an error if the passed expression is falsey.
  */
-function assertProp(expr: unknown, msg = ""): asserts expr {
+function assertTruthy(expr: unknown, msg = ""): asserts expr {
   if (!expr) {
     throw new ShadowError(msg);
-  }
-}
-
-/**
- * Adds or changes specific inline styles to an element without altering other
- * style values. CSS custom properties (variables) are allowed.
- */
-function changeInlineStyles(
-  element: HTMLElement,
-  [property, value]: [stylePropertyOrVariable: string, styleValues: string],
-) {
-  if (
-    property.slice(0, 2) === "--" &&
-    element.style.getPropertyValue(property) !== value
-  ) {
-    element.style.setProperty(property, value);
-  } else if (element.style[property as any] !== value) {
-    element.style[property as any] = value;
   }
 }
 
@@ -77,7 +45,11 @@ function isNull(input: unknown): input is null {
 export class Shadow extends HTMLElement {
   private waitingList = new Set<string>();
   private accessorsStore = new Map<string, unknown>();
-  readonly argsFromPropertyDecorator?: Required<PropertyAndOptions[]>;
+  readonly argsFromPropertyDecorator?: Required<PropertyAndPropertyOptions[]>;
+  /**
+   * This boolean will be `true` when `connectedCallback` has been called and all
+   * explicitly awaited properties have been set (the `waitingList` is empty).
+ */
   connected: boolean = false;
   shadowRoot!: ShadowRoot;
   /**
@@ -89,12 +61,16 @@ export class Shadow extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this.addEventListener("_update", () => {
-      this.firstUpdated();
-    }, { once: true });
-    this.addEventListener("_update", () => {
-      this.updated();
-    });
+    if (this.firstUpdated) {
+      this.addEventListener("_update", () => {
+        this.firstUpdated!();
+      }, { once: true });
+    }
+    if (this.updated) {
+      this.addEventListener("_update", () => {
+        this.updated!();
+      });
+    }
   }
 
   /**
@@ -146,19 +122,19 @@ export class Shadow extends HTMLElement {
    * lifecycle while considering the conditions coming from the `property` decorator.
    * You will never need to use this method if you use the `property` decorator.
   */
-  init(properties: PropertyAndOptions[]): void {
+  init(properties: PropertyAndPropertyOptions[]): void {
     return properties.forEach((
       {
         property,
         reflect,
         wait,
         assert,
-      }: PropertyAndOptions,
+      }: PropertyAndPropertyOptions,
     ) => {
       if (wait) {
         this.waitingList.add(property);
       } else if (assert) {
-        assertProp(
+        assertTruthy(
           (this as any)[property],
           `The property ${property} must have a truthy value.`,
         );
@@ -182,7 +158,7 @@ export class Shadow extends HTMLElement {
           if (wait) {
             this.waitingList.delete(property);
             if (assert) {
-              assertProp(
+              assertTruthy(
                 (this as any)[property],
                 `The property ${property} must have a truthy value.`,
               );
@@ -211,9 +187,10 @@ export class Shadow extends HTMLElement {
  */
   update(name: string, newValue: Attribute, isRendering = true): void {
     const property = convertDashToCamel(name);
-    if (!(property in this)) {
-      throw new ShadowError(`The property '${property}' does not exist.`);
-    }
+    assertTruthy(
+      property in this,
+      `The property '${property}' does not exist.`,
+    );
     if (
       (this as any)[property] !== newValue &&
       JSON.stringify((this as any)[property]) !== newValue
@@ -227,11 +204,7 @@ export class Shadow extends HTMLElement {
       }
     }
     if (isRendering) {
-      if (!this.connected) {
-        throw new ShadowError(
-          "The method 'update' was called too early.",
-        );
-      }
+      assertTruthy(this.connected, "The method 'update' was called too early.");
       this.actuallyRender();
     }
   }
@@ -247,7 +220,7 @@ export class Shadow extends HTMLElement {
     } = this.render();
     this.shadowRoot.innerHTML = htmlString;
     (this.constructor as typeof Shadow).styles.forEach((template) =>
-      cloneTemplateIntoParent(template, this.shadowRoot)
+      this.shadowRoot.append(template.content.cloneNode(true))
     );
     selectorAndKindAndEvents.forEach(
       ({ kind, selector, eventsAndListeners }) => {
@@ -310,68 +283,6 @@ export class Shadow extends HTMLElement {
   }
 
   /**
- * Dispatch a CustomEvent which bubbles as default through the whole DOM.
- */
-  dispatchCustomEvent(
-    eventName: string,
-    {
-      bubbles = true,
-      composed = true,
-      detail = null,
-    }: { bubbles?: boolean; composed?: boolean; detail?: unknown } = {},
-  ): boolean {
-    return this.dispatchEvent(
-      new CustomEvent(eventName, {
-        bubbles,
-        composed,
-        detail: detail === null
-          ? {
-            name: (this.constructor as typeof Shadow).is,
-            id: this.id,
-          }
-          : detail,
-      }),
-    );
-  }
-
-  /**
- * Checks if an element matching the selector is in the event's `composedPath()`.
- * It takes an event and a selector as arguments where the custom element's
- * tagName is the default selector.
- */
-  isInEventPath(event: Event, selector: string = this.tagName): boolean {
-    return event
-      .composedPath()
-      .some((eventTarget: EventTarget) =>
-        eventTarget instanceof HTMLElement
-          ? eventTarget.matches(
-            typeof selector === "string"
-              ? selector
-              : (this.constructor as typeof Shadow).is as string,
-          )
-          : false
-      );
-  }
-
-  /**
-   * Takes a JavaScript style object and an optional selector (default is the 
-   * custom element itself) and adds or changes specific inline styles to the 
-   * element matching the selector without altering other style values.
-   * CSS custom properties (variables) are allowed.
- */
-  changeCss(styles: Record<string, string>, selector?: string): void {
-    Object.entries(styles).forEach((entry) => {
-      if (selector) {
-        this.shadowRoot.querySelectorAll(selector).forEach((element) =>
-          changeInlineStyles(element as HTMLElement, entry)
-        );
-      } else {
-        changeInlineStyles(this, entry);
-      }
-    });
-  }
-
-  /**
  * Returns an array of the slot elements of the custom element.
  */
   getSlotElements(): HTMLElement[] {
@@ -390,24 +301,23 @@ export class Shadow extends HTMLElement {
    * A modifiable lifecycle callback which is called after the first update which
    * includes rendering.
  */
-  firstUpdated(): void {}
+  firstUpdated?(): void;
 
   /**
    * A modifiable lifecycle callback which is called after each update which
    * includes rendering.
  */
-  updated(): void {}
+  updated?(): void;
 
   /**
-   * The return type of the function `css`, which is an array of
-   * HTMLTemplateElements containing a script element, is assigned to this
-   * static property.
-   * */
+   * The return type of the function `css`, which is an array of HTMLTemplateElements
+   * containing a script element, is assigned to this static property.
+  */
   static styles: HTMLTemplateElement[] = [];
 
   /**
    * The decorator `customElement` - if used - sets this static property to the 
    * custom element's tag name automatically.
  */
-  static is: string | null = null;
+  static is?: string;
 }

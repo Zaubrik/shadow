@@ -1,4 +1,4 @@
-export { cloneTemplateIntoParent, Shadow } from "./shadow.ts";
+export { Shadow } from "./shadow.ts";
 
 export { html } from "./html.ts";
 
