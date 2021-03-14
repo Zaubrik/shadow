@@ -112,9 +112,12 @@ This class is the reason why you are here.
 
 #### constructor(init: ShadowRootInit)
 
-#### readonly argsFromPropertyDecorator?: Required<PropertyAndOptions[]>
+#### readonly argsFromPropertyDecorator?: Required<PropertyAndPropertyOptions[]>
 
 #### connected: boolean
+
+This boolean will be `true` when `connectedCallback` has been called and all
+explicitly awaited properties have been set (the `waitingList` is empty).
 
 #### shadowRoot: ShadowRoot
 
@@ -126,11 +129,9 @@ marked with the `@` sign in the html string.
 #### static styles: HTMLTemplateElement[]
 
 The return type of the function `css`, which is an array of HTMLTemplateElements
-containing a script element, is assigned to this
+containing a script element, is assigned to this static property.
 
-#### static property.
-
-#### static is: string | null
+#### static is?: string
 
 The decorator `customElement` - if used - sets this static property to the
 custom element's tag name automatically.
@@ -147,7 +148,7 @@ inside of it.
 A native custom elements' lifecycle callback: It will cause reflecting of
 properties to attributes
 
-#### init(properties: PropertyAndOptions[]): void
+#### init(properties: PropertyAndPropertyOptions[]): void
 
 Assigns the accessors to the element's properties and initializes the lifecycle
 while considering the conditions coming from the `property` decorator. You will
@@ -158,23 +159,6 @@ never need to use this method if you use the `property` decorator.
 Reflects properties to attributes and calls `actuallyRender` if the optional
 boolean `isRendering` is true (default: true).
 
-#### dispatchCustomEvent(eventName: string, {bubbles, composed, detail})
-
-Dispatch a CustomEvent which bubbles as default through the whole DOM.
-
-#### isInEventPath(event: Event, selector: string): boolean
-
-Checks if an element matching the selector is in the event's `composedPath()`.
-It takes an event and a selector as arguments where the custom element's tagName
-is the default selector.
-
-#### changeCss(styles: Record<string, string>, selector?: string): void
-
-Takes a JavaScript style object and an optional selector (default is the custom
-element itself) and adds or changes specific inline styles to the element
-matching the selector without altering other style values. CSS custom properties
-(variables) are allowed.
-
 #### getSlotElements(): HTMLElement[]
 
 Returns an array of the slot elements of the custom element.
@@ -184,12 +168,12 @@ Returns an array of the slot elements of the custom element.
 Is called by the method `actuallyRender` which renders the custom element. It
 must return the return type of the function `html`.
 
-#### firstUpdated(): void
+#### firstUpdated()?: void
 
 A modifiable lifecycle callback which is called after the first update which
 includes rendering.
 
-#### updated(): void
+#### updated()?: void
 
 A modifiable lifecycle callback which is called after each update which includes
 rendering.
