@@ -1,4 +1,11 @@
-import { createHtmlTemplate } from "./util.ts";
+/**
+ * Returns an `HTMLTemplateElement` created with the passed html string. 
+ */
+function createHtmlTemplate(html: string): HTMLTemplateElement {
+  const template = document.createElement("template");
+  template.innerHTML = html.trim();
+  return template;
+}
 
 /**
  * The `css` tag function parses css strings which can contain expressions with 
