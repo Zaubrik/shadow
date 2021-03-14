@@ -89,8 +89,8 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * A native custom elements' lifecycle callback: 
-   * It will cause reflecting of properties to attributes
+   * A native custom elements' lifecycle callback. Here, it manages the reflecting
+   * of properties to attributes.
  */
   attributeChangedCallback(
     name: string,

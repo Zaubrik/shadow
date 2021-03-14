@@ -162,7 +162,7 @@ function cleanUpString(str: string) {
  * with `this.dom.id["myButton"]`.
  * 2. This allows you to add EventListeners, e.g. `click=${this.clickHandler}`,
  * which will be added with the native addEventListener method under the hood.
- * You don't need arrow functions because because we use `bind(this)`.
+ * You don't need arrow functions because we use `bind(this)`.
  */
 export function html(
   strings: TemplateStringsArray,
