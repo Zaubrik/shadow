@@ -80,7 +80,7 @@ html code has two effects:
    referred with `this.dom.id["myButton"]`.
 2. This allows you to add EventListeners, e.g. click=\${this.clickHandler},
    which will be added with the native addEventListener method under the hood.
-   You don't need arrow functions because because we use `bind(this)`.
+   You don't need arrow functions because we use `bind(this)`.
 
 ### function css(strings: TemplateStringsArray, ...values: (string | HTMLTemplateElement)[])
 
@@ -145,8 +145,8 @@ inside of it.
 
 #### attributeChangedCallback(name: string, oldValue: Attribute, newValue: Attribute)
 
-A native custom elements' lifecycle callback: It will cause reflecting of
-properties to attributes
+A native custom elements' lifecycle callback. Here, it manages the reflecting of
+properties to attributes.
 
 #### init(properties: PropertyAndPropertyOptions[]): void
 
