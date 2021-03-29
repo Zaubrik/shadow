@@ -58,9 +58,9 @@ export class MyExample extends Shadow {
 
   render() {
     return html`
-      <h1 id="heading">${this.h1Content}</h1>
+      <h1 id=heading>${this.h1Content}</h1>
       <p>${this.pContent}</p>
-      <button @id="myButton" click=${this.clickHandler}>Count</button>
+      <button @id=myButton click=${this.clickHandler}>Count</button>
     `
   }
 }
