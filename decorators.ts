@@ -9,29 +9,20 @@ export type Constructor<T> = {
 /**
  * The `customElement` decorator takes the tag name of the custom element and 
  * registers the custom element.
- * If no tag name is passed, the class name is used instead through converting 
- * it from CamelCase to dash-case. The same tag name is assigned to the static 
- * `is` property.
+ * The same tag name is assigned to the static `is` property.
  */
 export function customElement(
-  tagName = "",
+  tagName: string,
 ): (clazz: Constructor<HTMLElement>) => void {
   return (clazz: Constructor<HTMLElement>) => {
     assertTruthy(
       typeof clazz === "function",
       "Something went wrong with the 'customElement' decorator.",
     );
-    /*
-     * NOTE: the replace method is necessary because the deno bundler seems to
-     * append numbers to class names occasionally.
-     */
-    const dashedTagName = tagName
-      ? tagName
-      : convertCamelToDash(clazz.name.replace(/\d+$/, ""));
     Object.defineProperty(clazz, "is", {
-      value: dashedTagName,
+      value: tagName,
     });
-    window.customElements.define(dashedTagName, clazz);
+    window.customElements.define(tagName, clazz);
     return clazz;
   };
 }

@@ -155,9 +155,8 @@ type string or HTMLTemplateElements (containing a script element).
 ### function customElement(tagName): (clazz: Constructor<HTMLElement>) => void
 
 The decorator `customElement` takes the tag name of the custom element and
-registers the custom element. If no tag name is passed, the class name is used
-instead through converting it from CamelCase to dash-case. The same tag name is
-assigned to the static `is` property.
+registers the custom element. The same tag name is assigned to the static `is`
+property.
 
 ### function property({reflect, wait, assert}: Omit<PropertyAndOptions, "property">)
 
