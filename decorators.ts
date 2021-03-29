@@ -1,10 +1,6 @@
-import { convertCamelToDash, ShadowError } from "./util.ts";
+import { assertTruthy, convertCamelToDash, ShadowError } from "./util.ts";
 
-export type PropertyOptions = {
-  reflect?: boolean;
-  wait?: boolean;
-  assert?: boolean;
-};
+import type { PropertyAndOptions } from "./shadow.ts";
 
 export type Constructor<T> = {
   new (...args: any[]): T;
@@ -21,24 +17,22 @@ export function customElement(
   tagName = "",
 ): (clazz: Constructor<HTMLElement>) => void {
   return (clazz: Constructor<HTMLElement>) => {
-    if (typeof clazz === "function") {
-      /*
-        * NOTE: the replace method is necessary here because the deno bundler 
-        * seems to add numbers occasionally
-        */
-      tagName = tagName
-        ? tagName
-        : convertCamelToDash(clazz.name.replace(/\d+$/, ""));
-      Object.defineProperty(clazz, "is", {
-        value: tagName,
-      });
-      window.customElements.define(tagName, clazz);
-      return clazz as any;
-    } else {
-      throw new ShadowError(
-        "Something went wrong with the 'customElement' decorator.",
-      );
-    }
+    assertTruthy(
+      typeof clazz === "function",
+      "Something went wrong with the 'customElement' decorator.",
+    );
+    /*
+     * NOTE: the replace method is necessary because the deno bundler seems to
+     * append numbers to class names occasionally.
+     */
+    const dashedTagName = tagName
+      ? tagName
+      : convertCamelToDash(clazz.name.replace(/\d+$/, ""));
+    Object.defineProperty(clazz, "is", {
+      value: dashedTagName,
+    });
+    window.customElements.define(dashedTagName, clazz);
+    return clazz;
   };
 }
 
@@ -50,21 +44,16 @@ export function customElement(
  *   to true would reduce the amount of renderings from 2 to 1 (you can just ignore it).
  * - The `assert` boolean checks if the input has a truthy value.
  */
-
 export function property({
   reflect = true,
   wait = false,
   assert = false,
-}: PropertyOptions = {}): (
+}: Omit<PropertyAndOptions, "property"> = {}): (
   protoOrDescriptor: HTMLElement,
   name: string,
 ) => void {
   return (protoOrDescriptor: HTMLElement, name: string) => {
-    if (!name) {
-      throw new ShadowError(
-        "the property name must be a non-empty string",
-      );
-    }
+    assertTruthy(name, "The property name must be a non-empty string");
 
     if (reflect === true) {
       const observedAttributesArray =
@@ -72,6 +61,7 @@ export function property({
       observedAttributesArray.push(
         convertCamelToDash(name),
       );
+
       Object.defineProperty(
         protoOrDescriptor.constructor as any,
         "observedAttributes",
@@ -85,10 +75,10 @@ export function property({
       );
     }
 
-    if (!(protoOrDescriptor as any).argsFromPropertyDecorator) {
+    if (!(protoOrDescriptor as any).propertiesAndOptions) {
       Object.defineProperty(
         protoOrDescriptor,
-        "argsFromPropertyDecorator",
+        "propertiesAndOptions",
         {
           enumerable: false,
           configurable: true,
@@ -98,7 +88,7 @@ export function property({
       );
     }
 
-    (protoOrDescriptor as any).argsFromPropertyDecorator!.push({
+    (protoOrDescriptor as any).propertiesAndOptions!.push({
       property: name,
       reflect,
       wait,

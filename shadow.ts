@@ -1,28 +1,28 @@
-import { convertCamelToDash, convertDashToCamel, ShadowError } from "./util.ts";
-
-import type { EventsAndListeners, Html } from "./html.ts";
-import type { PropertyOptions } from "./decorators.ts";
+import {
+  assertString,
+  assertTruthy,
+  convertCamelToDash,
+  convertDashToCamel,
+  ShadowError,
+} from "./util.ts";
+import { AllowedExpressions, EventAndListener, isHReturn } from "./html.ts";
 
 /**
  * Represents the type of HTML attributes.
  */
 export type Attribute = string | null;
-type PropertyAndPropertyOptions = {
+
+export type PropertyAndOptions = {
   property: string;
-} & PropertyOptions;
+  reflect?: boolean;
+  wait?: boolean;
+  assert?: boolean;
+};
+
 type Dom = {
   id: Record<string, HTMLElement>;
   class: Record<string, HTMLElement[]>;
 };
-
-/**
- * Throws an error if the passed expression is falsey.
- */
-function assertTruthy(expr: unknown, msg = ""): asserts expr {
-  if (!expr) {
-    throw new ShadowError(msg);
-  }
-}
 
 /**
  * Returns true if the passed value is an HTMLTemplateElement. Otherwise it 
@@ -43,9 +43,10 @@ function isNull(input: unknown): input is null {
  * This class is the reason why you are here. 
  */
 export class Shadow extends HTMLElement {
+  private renderingCount = 0;
   private waitingList = new Set<string>();
   private accessorsStore = new Map<string, unknown>();
-  readonly argsFromPropertyDecorator?: Required<PropertyAndPropertyOptions[]>;
+  private propertiesAndOptions?: Required<PropertyAndOptions[]>;
   /**
    * This boolean will be `true` when `connectedCallback` has been called and all
    * explicitly awaited properties have been set (the `waitingList` is empty).
@@ -53,8 +54,8 @@ export class Shadow extends HTMLElement {
   connected: boolean = false;
   shadowRoot!: ShadowRoot;
   /**
- * In the dom object are the child elements stored which match the selectors you 
- * marked with the `@` sign in the html string.
+   * The child elements, which match the id and class selectors marked with the
+   * `@` sign, are stored in the `dom` object.
  */
   dom: Dom = { id: {}, class: {} };
 
@@ -75,17 +76,11 @@ export class Shadow extends HTMLElement {
 
   /**
    * A native custom elements' [lifecycle callback](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements).
-   * If you want to modify this callback you must call `super.connectedCallback()`
+   * When you use this callback, you probably want to call `super.connectedCallback()`
    * inside of it.
  */
   connectedCallback() {
-    if (this.argsFromPropertyDecorator) {
-      this.init(this.argsFromPropertyDecorator);
-    }
-    if (this.waitingList.size === 0) {
-      this.connected = true;
-      this.actuallyRender();
-    }
+    this.init(this.propertiesAndOptions || []);
   }
 
   /**
@@ -118,18 +113,18 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * Assigns the accessors to the element's properties and initializes the
-   * lifecycle while considering the conditions coming from the `property` decorator.
-   * You will never need to use this method if you use the `property` decorator.
-  */
-  init(properties: PropertyAndPropertyOptions[]): void {
-    return properties.forEach((
+   * Call this method in 'connectedCallback' if you want to avoid using the
+   * 'property' decorator. It assigns the accessors to the element's properties
+   * and starts rendering.
+   */
+  init(propertiesAndOptions: PropertyAndOptions[]): void {
+    propertiesAndOptions.forEach((
       {
         property,
         reflect,
         wait,
         assert,
-      }: PropertyAndPropertyOptions,
+      }: PropertyAndOptions,
     ) => {
       if (wait) {
         this.waitingList.add(property);
@@ -179,6 +174,10 @@ export class Shadow extends HTMLElement {
         },
       });
     });
+    if (this.waitingList.size === 0) {
+      this.connected = true;
+      this.actuallyRender();
+    }
   }
 
   /**
@@ -209,77 +208,48 @@ export class Shadow extends HTMLElement {
     }
   }
 
+  private createFragment(...input: AllowedExpressions[]): DocumentFragment {
+    const documentFragment = document.createDocumentFragment();
+    input.flat(2).forEach((data) => {
+      if (isHReturn(data)) {
+        const { element, collection } = data;
+        documentFragment.appendChild(element);
+        collection.forEach(({ target, queries, eventsAndListeners }) => {
+          queries.forEach(({ kind, selector }) =>
+            kind === "id"
+              ? this.dom.id[selector] = target
+              : this.dom.class[selector]
+              ? this.dom.class[selector].push(target)
+              : this.dom.class[selector] = [target]
+          );
+          eventsAndListeners.forEach(({ event, listener }) =>
+            target.addEventListener(event, listener.bind(this))
+          );
+        });
+      } else {
+        documentFragment.appendChild(
+          document.createTextNode(assertString(data)),
+        );
+      }
+    });
+    return documentFragment;
+  }
   /**
  * Calls the this.render() function, processes its return value and dispatches 
  * the event `_update`.
  */
   private actuallyRender(): void {
-    const {
-      htmlString,
-      selectorAndKindAndEvents,
-    } = this.render();
-    this.shadowRoot.innerHTML = htmlString;
+    if (this.renderingCount > 0) this.dom = { id: {}, class: {} };
+    const documentFragment = this.createFragment(this.render());
+    while (this.shadowRoot.firstChild) {
+      this.shadowRoot.removeChild(this.shadowRoot.firstChild);
+    }
+    this.shadowRoot.appendChild(documentFragment);
     (this.constructor as typeof Shadow).styles.forEach((template) =>
       this.shadowRoot.append(template.content.cloneNode(true))
     );
-    selectorAndKindAndEvents.forEach(
-      ({ kind, selector, eventsAndListeners }) => {
-        this.addEventListeners(
-          kind === "id"
-            ? this.processIdSelectors(selector)
-            : this.processClassSelectors(selector),
-          eventsAndListeners,
-        );
-      },
-    );
     this.dispatchEvent(new CustomEvent("_update"));
-  }
-
-  /**
- * Adds the shadowRoot's child elements which match the id selector to the 
- * this.dom.id object.
- */
-  private processIdSelectors(selector: string): HTMLElement[] {
-    const element = this.shadowRoot.getElementById(selector);
-    if (isHTMLElement(element)) {
-      return [this.dom.id[selector] = element];
-    } else {
-      throw new ShadowError(
-        `No HTMLElement with id selector '${selector}'.`,
-      );
-    }
-  }
-
-  /**
- * Adds the shadowRoot's child elements which match the class selector to the 
- * this.dom.class object.
- */
-  private processClassSelectors(selector: string): HTMLElement[] {
-    const nodeList = this.shadowRoot.querySelectorAll("." + selector);
-    const collection = [
-      ...nodeList,
-    ].filter(isHTMLElement);
-    if (collection.length === 0 || nodeList.length !== collection.length) {
-      throw new ShadowError(
-        `No HTMLElement with class selector '${selector}'.`,
-      );
-    } else {
-      return this.dom.class[selector] = collection;
-    }
-  }
-
-  /**
- * Adds to all passed elements the list of the passed events and listeners.
- */
-  private addEventListeners(
-    elements: HTMLElement[],
-    eventsAndListeners: EventsAndListeners,
-  ): void {
-    eventsAndListeners.map(([event, listener]) =>
-      elements.map((element) =>
-        element.addEventListener(event, listener.bind(this))
-      )
-    );
+    this.renderingCount++;
   }
 
   /**
@@ -293,7 +263,7 @@ export class Shadow extends HTMLElement {
    * Is called by the method `actuallyRender` which renders the custom element.
    * It must return the return type of the function `html`.
  */
-  render(): Html {
+  render(): AllowedExpressions {
     throw new ShadowError("The render method must be defined.");
   }
 

@@ -1,190 +1,89 @@
+// @deno-types="https://raw.githubusercontent.com/developit/htm/master/src/index.d.ts"
+import htm from "https://unpkg.com/htm@3.0.4/dist/htm.module.js?module";
+import { assertString } from "./util.ts";
+
 export type AllowedExpressions =
   | string
-  | string[]
   | number
   | false
   | null
-  | Html
-  | Html[]
-  | EventListener;
-export type EventListener = (event: any) => any;
-export type EventsAndListeners = [event: string, listener: EventListener][];
-export type SelectorAndKindAndEvents = {
+  | HReturn
+  | EventListener
+  | AllowedExpressions[];
+export type EventAndListener = { event: string; listener: EventListener };
+type EventListener = (event: any) => any;
+type Query = {
+  kind: "id" | "class";
   selector: string;
-  kind: string;
-  eventsAndListeners: EventsAndListeners;
 };
+type Collection = {
+  target: HTMLElement;
+  queries: Query[];
+  eventsAndListeners: EventAndListener[];
+}[];
+type HReturn = { element: HTMLElement; collection: Collection };
 
-function assertString(input: unknown): string {
-  return typeof input === "string"
-    ? input
-    : typeof input === "number"
-    ? input.toString()
-    : "";
+function isArrayOfListeners(input: any[]): input is EventListener[] {
+  return input.every((i) => typeof i === "function");
 }
 
-function isPresent<T>(t: T | undefined | null | void): t is T {
-  return t !== undefined && t !== null;
+export function isHReturn(input: any): input is HReturn {
+  return input?.element instanceof HTMLElement;
 }
 
-function isArrayOfHtmls(
-  arr: unknown[],
-): arr is Html[] {
-  return arr.every((el) => el instanceof Html);
-}
-
-function replaceCharAt(str: string, index: number, replace: string) {
-  return str.substring(0, index) + replace + str.substring(index + 1);
-}
-
-function getUniqueList(
-  arr: SelectorAndKindAndEvents[],
-  key: string,
-): SelectorAndKindAndEvents[] {
-  return [...new Map(arr.map((item: any) => [item[key], item])).values()];
-}
-
-/*
- * Removes Attributes if their value expression is `null`, parses embedded `Html`
- * objects, stringifies expressions and separates and sorts the htmlString,
- * eventListeners, events and id and class selectors.
- */
-function sortExpressionsOut(
-  strings: TemplateStringsArray,
-  values: AllowedExpressions[],
-): [string, EventListener[], SelectorAndKindAndEvents[]] {
-  return values.reduce<[string, EventListener[], SelectorAndKindAndEvents[]]>(
-    (acc, value, i) => {
-      if (value instanceof Html) {
-        acc[2] = [...acc[2], ...value.selectorAndKindAndEvents];
-        acc[0] += value.htmlString + strings[i + 1];
-        return acc;
-      } else {
-        if (
-          (value === null) &&
-          (strings[i + 1][0] === "'" || strings[i + 1][0] === '"') &&
-          ['="', "='"].includes(strings[i].slice(-2))
-        ) {
-          acc[0] = acc[0].slice(
-            0,
-            acc[0].lastIndexOf(
-              strings[i].slice(strings[i].lastIndexOf(" ") + 1),
-            ),
-          );
-          acc[0] += strings[i + 1].slice(1);
-          return acc;
-        } else if (typeof value === "function") {
-          acc[1].push(value as EventListener);
-          acc[0] += strings[i + 1];
-          return acc;
-        } else {
-          if (Array.isArray(value)) {
-            if (value.length && isArrayOfHtmls(value)) {
-              value.map(({ htmlString, selectorAndKindAndEvents }) => {
-                acc[0] += htmlString;
-                acc[2] = [...acc[2], ...selectorAndKindAndEvents];
-              });
-            } else {
-              acc[0] += value.map(assertString).join("");
-            }
-          } else {
-            acc[0] += assertString(value);
-          }
-          acc[0] += strings[i + 1];
-          return acc;
-        }
-      }
-    },
-    [strings[0], [], []],
-  );
-}
-
-const specialIdOrClassRegexp = /(@id=|@class=)[",',`](.*?)[",',`]/g;
-const specialIdOrClassRegexpExact = /@(id|class)/;
-const specialEventRegexp = /([a-z]*)=/g;
-const specialIdOrClassAndOptionalEventRegexp =
-  /@(?:id|class)="[^"]+?(\s[a-z]*=[^"]*)?"/g;
-
-function parse(
-  str: string,
-  eventListeners: EventListener[],
-): SelectorAndKindAndEvents[] {
-  return [...str.matchAll(specialIdOrClassRegexp)]
-    .map((input) => {
-      const [, kind] = input[1].match(specialIdOrClassRegexpExact) ?? [null];
-      const [selector, ...eventStrings] = input[2]
-        .split(/ (.+)/)
-        .filter((s) => s !== "");
-      if (!kind || !selector) {
-        throw TypeError("Invalid html syntax next to the special marker '@'.");
-      }
-      const eventsAndListeners = eventStrings.map((el) => {
-        return [...el.matchAll(specialEventRegexp)].map<
-          [string, EventListener]
-        >((
-          event,
-        ) => {
-          return [event[1], eventListeners.shift()!];
-        });
-      }).flat();
-      return {
-        selector,
-        kind,
-        eventsAndListeners,
-      };
-    });
-}
-
-function cleanUpString(str: string) {
-  const input = [...str.matchAll(specialIdOrClassAndOptionalEventRegexp)];
-  return input
-    .map((e) => e[1])
-    .filter(isPresent)
-    .reduce(
-      (acc, s) => acc.replace(s, ""),
-      input.reduce(
-        (acc, input) =>
-          typeof input.index === "number"
-            ? replaceCharAt(acc, input.index, " ")
-            : acc,
-        str,
-      ),
-    ).trim();
+export function h(
+  type: string,
+  props: Record<string, any>,
+  ...children: AllowedExpressions[]
+): HReturn {
+  const eventsAndListeners: EventAndListener[] = [];
+  const queries: Query[] = [];
+  const collection: Collection = [];
+  const element = document.createElement(type);
+  for (const key in props) {
+    if (typeof props[key] === "function") {
+      eventsAndListeners.push({ event: key, listener: props[key] });
+    } else if (Array.isArray(props[key]) && isArrayOfListeners(props[key])) {
+      props[key].forEach((listener: EventListener) =>
+        eventsAndListeners.push({ event: key, listener: props[key] })
+      );
+    } else if (key === "@id" || key === "@class") {
+      const idOrClass = key.slice(1) as "id" | "class";
+      queries.push({
+        kind: idOrClass,
+        selector: props[key],
+      });
+      element.setAttribute(idOrClass, props[key]);
+    } else if (props[key] === true) {
+      element.setAttribute(key, "");
+    } else if (props[key] !== null) {
+      element.setAttribute(key, props[key]);
+    }
+  }
+  for (const child of children.flat(2)) {
+    if (isHReturn(child)) {
+      collection.push(...child.collection);
+      element.appendChild(child.element);
+    } else {
+      element.appendChild(document.createTextNode(assertString(child)));
+    }
+  }
+  collection.push({ target: element, queries, eventsAndListeners });
+  return { element, collection };
 }
 
 /**
- * The `html` tag function parses html strings containing the special marker `@`
- * and various `AllowedExpressions`.
- * Putting an `@` before `id` or `class` in your html code has two effects:
- * 1. The element(s) matching the selector will be queried and added to the 
- * this.dom object. All matching class elements or one id element. E.g. to the
- * button element of `<div><button @id="myButton"></button></div>` can be referred
- * with `this.dom.id["myButton"]`.
- * 2. This allows you to add EventListeners, e.g. `click=${this.clickHandler}`,
- * which will be added with the native addEventListener method under the hood.
- * You don't need arrow functions because we use `bind(this)`.
+ * Uses [htm (Hyperscript Tagged Markup)](https://github.com/developit/htm) under
+ * the hood which uses standard JavaScript Tagged Templates and works in all modern
+ * browsers. The function `html` takes a _tagged template_ and processes the
+ * `AllowedExpressions` where `false` and `null` are converted to an empty string
+ * and the `numbers` are _stringified_.
+ * The elements matching the id and class selectors marked with an `@` sign will
+ * later be added to the `this.dom` object.
+ * We add the `EventListeners` with `addEventListener(event, listener.bind(this))`
+ * so that you don't need to use arrow functions anymore.
  */
-export function html(
+export const html: (
   strings: TemplateStringsArray,
-  ...expressions: AllowedExpressions[]
-): Html {
-  const [unfinishedHtmlString, eventListeners, embeddedTemplateAndExpressions] =
-    sortExpressionsOut(
-      strings,
-      expressions,
-    );
-  return new Html(
-    cleanUpString(unfinishedHtmlString),
-    getUniqueList([
-      ...parse(unfinishedHtmlString, eventListeners),
-      ...embeddedTemplateAndExpressions,
-    ], "selector"),
-  );
-}
-
-export class Html {
-  constructor(
-    readonly htmlString: string,
-    readonly selectorAndKindAndEvents: SelectorAndKindAndEvents[],
-  ) {}
-}
+  ...values: AllowedExpressions[]
+) => AllowedExpressions = htm.bind(h);

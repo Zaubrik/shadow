@@ -7,7 +7,7 @@ import {
   Shadow,
 } from "../mod.ts";
 
-@customElement()
+@customElement("my-example")
 export class MyExample extends Shadow {
   @property()
   h1Content = 0;
@@ -35,21 +35,24 @@ export class MyExample extends Shadow {
   `;
 
   render() {
-    return html` <h1>${this.h1Content}</h1>
-      <button @id="myButton click=${this.clickHandler}">Count</button>
-      <p class="text">You can change values through...</p>
-      <p class="text">${this.firstContent}</p>
-      <p class="text">${this.secondContent}</p>
+    return html`<h1>${this.h1Content}</h1>
+    <button id=myButton click=${this.clickHandler}>Count</button>
+      <p class=text>You can change values through...</p>
+      <p class=text>${this.firstContent}</p>
+      <p class=text>${this.secondContent}</p>
       <ul>
-        ${this.items.map((item) => `<li @class="myLi">${item}</li>`)}
+        ${this.items.map((item) => html`<li @class=myLi>${item}</li>`)}
       </ul>`;
   }
 
   updated() {
-    let delay = 0;
-    const colors = ["yellow", "green", "pink"];
+    const colors = ["yellow", "green", "pink", "red", "blue", "orange"];
     this.dom.class["myLi"].forEach((li, i) =>
-      setTimeout(() => (li.style.background = colors[i]), (delay += 500))
+      setInterval(
+        () => (li.style.background =
+          colors[Math.floor(Math.random() * (5 - 0 + 1)) + 0]),
+        500,
+      )
     );
   }
 
