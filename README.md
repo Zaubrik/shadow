@@ -8,9 +8,7 @@ Elements.
 Compile `example/my_example.ts`:
 
 ```bash
-deno bundle --no-check example/my_example.ts > example/my_example.js
-# Add a tsconfig.json with DOM types to enable type checking:
-# deno bundle --config tsconfig.json example/my_example.ts > example/my_example.js
+deno bundle --config example/tsconfig.json example/my_example.ts > example/my_example.js
 ```
 
 Serve the `index.html` file:
@@ -58,9 +56,9 @@ export class MyExample extends Shadow {
 
   render() {
     return html`
-      <h1 id=heading>${this.h1Content}</h1>
+      <h1 id="heading">${this.h1Content}</h1>
       <p>${this.pContent}</p>
-      <button @id=myButton click=${this.clickHandler}>Count</button>
+      <button @id="myButton" click=${this.clickHandler}>Count</button>
     `
   }
 }

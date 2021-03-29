@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "removeComments": true,
+    "lib": ["esnext", "dom", "dom.iterable", "deno.ns"], // include "deno.ns" for deno namespace
+    "experimentalDecorators": true,
+    // "sourceMap": true
+    "importsNotUsedAsValues": "preserve",
+    "strict": true
+  }
+}
