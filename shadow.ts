@@ -55,14 +55,14 @@ export class Shadow extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     if (this.firstUpdated) {
-      this.addEventListener("_update", (event: Event) => {
-        this.firstUpdated!(event);
-      }, { once: true });
+      this.addEventListener(
+        "_update",
+        (event: Event) => this.firstUpdated!(event),
+        { once: true },
+      );
     }
     if (this.updated) {
-      this.addEventListener("_update", (event: Event) => {
-        this.updated!(event);
-      });
+      this.addEventListener("_update", (event: Event) => this.updated!(event));
     }
   }
 
