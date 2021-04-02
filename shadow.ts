@@ -3,9 +3,8 @@ import {
   assertTruthy,
   convertCamelToDash,
   convertDashToCamel,
-  ShadowError,
 } from "./util.ts";
-import { AllowedExpressions, EventAndListener, isHReturn } from "./html.ts";
+import { AllowedExpressions, isHReturn } from "./html.ts";
 
 /**
  * Represents the type of HTML attributes.
@@ -15,6 +14,7 @@ export type Attribute = string | null;
 export type PropertyAndOptions = {
   property: string;
   reflect?: boolean;
+  render?: boolean;
   wait?: boolean;
   assert?: boolean;
 };
@@ -23,14 +23,6 @@ type Dom = {
   id: Record<string, HTMLElement>;
   class: Record<string, HTMLElement[]>;
 };
-
-/**
- * Returns true if the passed value is an HTMLTemplateElement. Otherwise it 
- * returns false.
- */
-function isHTMLElement(element: unknown): element is HTMLElement {
-  return element instanceof HTMLElement;
-}
 
 /**
  * Returns true if the passed value is null. Otherwise it returns false.
@@ -63,13 +55,13 @@ export class Shadow extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     if (this.firstUpdated) {
-      this.addEventListener("_update", () => {
-        this.firstUpdated!();
+      this.addEventListener("_update", (event: Event) => {
+        this.firstUpdated!(event);
       }, { once: true });
     }
     if (this.updated) {
-      this.addEventListener("_update", () => {
-        this.updated!();
+      this.addEventListener("_update", (event: Event) => {
+        this.updated!(event);
       });
     }
   }
@@ -93,11 +85,7 @@ export class Shadow extends HTMLElement {
     newValue: Attribute,
   ) {
     if (newValue === oldValue) return;
-    else {
-      return this.connected
-        ? this.update(name, newValue, true)
-        : this.update(name, newValue, false);
-    }
+    else return this.update(name, newValue);
   }
 
   /**
@@ -121,12 +109,13 @@ export class Shadow extends HTMLElement {
     propertiesAndOptions.forEach((
       {
         property,
-        reflect,
-        wait,
-        assert,
+        reflect = true,
+        render = true,
+        wait = false,
+        assert = false,
       }: PropertyAndOptions,
     ) => {
-      if (wait) {
+      if (wait && !this.connected) {
         this.waitingList.add(property);
       } else if (assert) {
         assertTruthy(
@@ -159,37 +148,34 @@ export class Shadow extends HTMLElement {
               );
             }
             if (this.waitingList.size === 0) {
-              this.connected = true;
+              if (!this.connected) this.connected = true;
             }
           }
-          if (this.connected && !reflect) {
-            this.actuallyRender();
-          } else if (
+          if (
             reflect &&
             attributeValue !== value &&
             attributeValue !== JSON.stringify(value)
           ) {
             this.updateAttribute(attributeName, value);
           }
+          if (this.connected && render) {
+            this.actuallyRender();
+          }
         },
       });
     });
     if (this.waitingList.size === 0) {
-      this.connected = true;
+      if (!this.connected) this.connected = true;
       this.actuallyRender();
     }
   }
 
   /**
- * Reflects properties to attributes and calls `actuallyRender` if the optional 
- * boolean `isRendering` is true (default: true).
+ * Reflects properties to attributes.
  */
-  update(name: string, newValue: Attribute, isRendering = true): void {
+  update(name: string, newValue: Attribute): void {
     const property = convertDashToCamel(name);
-    assertTruthy(
-      property in this,
-      `The property '${property}' does not exist.`,
-    );
+    assertTruthy(property in this, `The property '${property}' doen't exist.`);
     if (
       (this as any)[property] !== newValue &&
       JSON.stringify((this as any)[property]) !== newValue
@@ -202,10 +188,6 @@ export class Shadow extends HTMLElement {
         (this as any)[property] = newValue;
       }
     }
-    if (isRendering) {
-      assertTruthy(this.connected, "The method 'update' was called too early.");
-      this.actuallyRender();
-    }
   }
 
   private createFragment(...input: AllowedExpressions[]): DocumentFragment {
@@ -217,10 +199,10 @@ export class Shadow extends HTMLElement {
         collection.forEach(({ target, queries, eventsAndListeners }) => {
           queries.forEach(({ kind, selector }) =>
             kind === "id"
-              ? this.dom.id[selector] = target
+              ? this.dom.id[selector] = target as HTMLElement
               : this.dom.class[selector]
-              ? this.dom.class[selector].push(target)
-              : this.dom.class[selector] = [target]
+              ? this.dom.class[selector].push(target as HTMLElement)
+              : this.dom.class[selector] = [target as HTMLElement]
           );
           eventsAndListeners.forEach(({ event, listener }) =>
             target.addEventListener(event, listener.bind(this))
@@ -238,9 +220,10 @@ export class Shadow extends HTMLElement {
  * Calls the this.render() function, processes its return value and dispatches 
  * the event `_update`.
  */
+
   private actuallyRender(): void {
     if (this.renderingCount > 0) this.dom = { id: {}, class: {} };
-    const documentFragment = this.createFragment(this.render());
+    const documentFragment = this.createFragment(this.render!());
     while (this.shadowRoot.firstChild) {
       this.shadowRoot.removeChild(this.shadowRoot.firstChild);
     }
@@ -253,31 +236,23 @@ export class Shadow extends HTMLElement {
   }
 
   /**
- * Returns an array of the slot elements of the custom element.
- */
-  getSlotElements(): HTMLElement[] {
-    return [...this.children] as HTMLElement[];
-  }
-
-  /**
    * Is called by the method `actuallyRender` which renders the custom element.
-   * It must return the return type of the function `html`.
+   * It must return the return type of the function `html` which is
+   * `AllowedExpressions`.
  */
-  render(): AllowedExpressions {
-    throw new ShadowError("The render method must be defined.");
-  }
+  render?(): AllowedExpressions;
 
   /**
    * A modifiable lifecycle callback which is called after the first update which
    * includes rendering.
  */
-  firstUpdated?(): void;
+  firstUpdated?(event: Event): void;
 
   /**
    * A modifiable lifecycle callback which is called after each update which
    * includes rendering.
  */
-  updated?(): void;
+  updated?(event: Event): void;
 
   /**
    * The return type of the function `css`, which is an array of HTMLTemplateElements

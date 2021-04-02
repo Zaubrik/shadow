@@ -112,31 +112,27 @@ Call this method in 'connectedCallback' if you want to avoid using the
 'property' decorator. It assigns the accessors to the element's properties and
 starts rendering.
 
-#### update(name: string, newValue: Attribute, isRendering): void
+#### update(name: string, newValue: Attribute): void
 
-Reflects properties to attributes and calls `actuallyRender` if the optional
-boolean `isRendering` is true (default: true).
+Reflects properties to attributes.
 
-#### getSlotElements(): HTMLElement[]
-
-Returns an array of the slot elements of the custom element.
-
-#### render(): AllowedExpressions
+#### render?(): AllowedExpressions
 
 Is called by the method `actuallyRender` which renders the custom element. It
-must return the return type of the function `html`.
+must return the return type of the function `html` which is
+`AllowedExpressions`.
 
-#### firstUpdated?(): void
+#### firstUpdated?(event: Event): void
 
 A modifiable lifecycle callback which is called after the first update which
 includes rendering.
 
-#### updated?(): void
+#### updated?(event: Event): void
 
 A modifiable lifecycle callback which is called after each update which includes
 rendering.
 
-### function html( strings: TemplateStringsArray, ...values: AllowedExpressions[]) => AllowedExpressions
+### function html(strings: TemplateStringsArray, ...values: AllowedExpressions[]) => AllowedExpressions
 
 Uses [htm (Hyperscript Tagged Markup)](https://github.com/developit/htm) under
 the hood which uses standard JavaScript Tagged Templates and works in all modern
@@ -145,22 +141,23 @@ browsers. The function `html` takes a _tagged template_ and processes the
 and the `numbers` are _stringified_. The elements matching the id and class
 selectors marked with an `@` sign will later be added to the `this.dom` object.
 We add the `EventListeners` with `addEventListener(event, listener.bind(this))`
-so that you don't need to use arrow functions anymore.
+so that you don't need to use arrow functions anymore. It parses SVG elements as
+well.
 
-### function css(strings: TemplateStringsArray, ...values: (string | HTMLTemplateElement)[])
+### function css(strings: TemplateStringsArray, ...values: (string | HTMLTemplateElement)[]): HTMLTemplateElement[]
 
 The `css` tag function parses css strings which can contain expressions with the
 type string or HTMLTemplateElements (containing a script element).
 
-### function customElement(tagName): (clazz: Constructor<HTMLElement>) => void
+### function customElement(tagName: string): (clazz: Constructor<HTMLElement>) => void
 
-The decorator `customElement` takes the tag name of the custom element and
+The `customElement` decorator takes the tag name of the custom element and
 registers the custom element. The same tag name is assigned to the static `is`
 property.
 
-### function property({reflect, wait, assert}: Omit<PropertyAndOptions, "property">)
+### function property({reflect, render, wait, assert}: Omit<PropertyAndOptions, "property">)
 
-The decorator `property` takes an optional object as argument with three
+The `property` decorator takes an optional object as argument with three
 optional properties:
 
 - Setting `reflect` to false would stop the element's attribute from

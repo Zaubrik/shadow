@@ -37,6 +37,7 @@ export function customElement(
  */
 export function property({
   reflect = true,
+  render = true,
   wait = false,
   assert = false,
 }: Omit<PropertyAndOptions, "property"> = {}): (
@@ -82,6 +83,7 @@ export function property({
     (protoOrDescriptor as any).propertiesAndOptions!.push({
       property: name,
       reflect,
+      render,
       wait,
       assert,
     });
