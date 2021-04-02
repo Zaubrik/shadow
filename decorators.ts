@@ -28,12 +28,14 @@ export function customElement(
 }
 
 /**
- * The `property` decorator takes an optional object as argument with three
+ * The `property` decorator takes an optional object as argument with four
  * optional properties:
- * - Setting `reflect` to false would stop the element's attribute from synchronising.
- * - If you plan to use properties instead of attributes as data input, setting `wait`
+ * 1. Setting `reflect` to false would stop the element's attribute from synchronising.
+ * 2. If you don't want the changing of the property to cause a rerendering, then 
+ *    set `render` to false.
+ * 3. If you plan to use properties instead of attributes as data input, setting `wait`
  *   to true would reduce the amount of renderings from 2 to 1 (you can just ignore it).
- * - The `assert` boolean checks if the input has a truthy value.
+ * 4. The `assert` boolean checks if the input has a truthy value.
  */
 export function property({
   reflect = true,

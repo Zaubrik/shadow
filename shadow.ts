@@ -103,7 +103,8 @@ export class Shadow extends HTMLElement {
   /**
    * Call this method in 'connectedCallback' if you want to avoid using the
    * 'property' decorator. It assigns the accessors to the element's properties
-   * and starts rendering.
+   * and starts rendering. The arguments are explained next to the `property` 
+   * decorator.
    */
   init(propertiesAndOptions: PropertyAndOptions[]): void {
     propertiesAndOptions.forEach((
@@ -171,7 +172,7 @@ export class Shadow extends HTMLElement {
   }
 
   /**
- * Reflects properties to attributes.
+ * Compares and reflects properties to attributes.
  */
   update(name: string, newValue: Attribute): void {
     const property = convertDashToCamel(name);
