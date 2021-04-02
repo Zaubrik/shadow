@@ -1,16 +1,14 @@
-// @deno-types="https://raw.githubusercontent.com/developit/htm/master/src/index.d.ts"
-// import htm from "https://unpkg.com/htm@3.0.4/dist/htm.module.js?module";
 import htm from "https://unpkg.com/htm@3.0.4/mini/index.mjs";
 import { assertString } from "./util.ts";
 
 export type AllowedExpressions =
   | string
   | number
-  | false
+  | boolean
   | null
   | HReturn
   | EventListener
-  | Record<string, string | null>
+  | Record<string, any>
   | AllowedExpressions[];
 export type EventAndListener = { event: string; listener: EventListener };
 type EventListener = (event: any) => any;
@@ -57,7 +55,7 @@ export function h(
       eventsAndListeners.push({ event: key, listener: props[key] });
     } else if (Array.isArray(props[key]) && isArrayOfListeners(props[key])) {
       props[key].forEach((listener: EventListener) =>
-        eventsAndListeners.push({ event: key, listener: props[key] })
+        eventsAndListeners.push({ event: key, listener })
       );
     } else if (key[0] === "@") {
       const idOrClass = key.slice(1);
@@ -70,7 +68,9 @@ export function h(
       }
     } else if (props[key] === true) {
       element.setAttribute(key, "");
-    } else if (props[key] !== null) {
+    } else if (typeof props[key] === "object" && props[key] !== null) {
+      element.setAttribute(key, JSON.stringify(props[key]));
+    } else if (typeof props[key] === "string") {
       element.setAttribute(key, props[key]);
     }
   }
