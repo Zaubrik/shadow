@@ -62,7 +62,7 @@ export function h(
       if (isSpecialKey(idOrClass)) {
         queries.push({
           kind: idOrClass,
-          selector: props[key],
+          selector: props[key].replace(/ .*/, ""),
         });
         element.setAttribute(idOrClass, props[key]);
       }

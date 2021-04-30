@@ -44,16 +44,14 @@ export class Shadow extends HTMLElement {
    * explicitly awaited properties have been set (the `waitingList` is empty).
  */
   connected: boolean = false;
-  shadowRoot!: ShadowRoot;
+  shadowRoot: ShadowRoot = this.attachShadow({ mode: "open" });
   /**
    * The child elements, which match the id and class selectors marked with the
    * `@` sign, are stored in the `dom` object.
  */
   dom: Dom = { id: {}, class: {} };
-
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
     if (this.firstUpdated) {
       this.addEventListener(
         "_update",
