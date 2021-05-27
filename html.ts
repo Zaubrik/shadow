@@ -74,7 +74,7 @@ export function h(
       element.setAttribute(key, props[key]);
     }
   }
-  // NOTE: Improve SVG parsing.
+  // TODO: Improve SVG parsing.
   if (type === "svg") {
     element.innerHTML = children.flat(2).reduce<string>(
       (acc, child) =>

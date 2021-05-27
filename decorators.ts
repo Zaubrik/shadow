@@ -7,7 +7,7 @@ export type Constructor<T> = {
 };
 
 /**
- * The `customElement` decorator takes the tag name of the custom element and 
+ * The `customElement` decorator takes the tag name of the custom element and
  * registers the custom element.
  * The same tag name is assigned to the static `is` property.
  */
@@ -31,7 +31,7 @@ export function customElement(
  * The `property` decorator takes an optional object as argument with four
  * optional properties:
  * 1. Setting `reflect` to false would stop the element's attribute from synchronising.
- * 2. If you don't want the changing of the property to cause a rerendering, then 
+ * 2. If you don't want the changing of the property to cause a rerendering, then
  *    set `render` to false.
  * 3. If you plan to use properties instead of attributes as data input, setting `wait`
  *   to true would reduce the amount of renderings from 2 to 1 (you can just ignore it).
@@ -69,10 +69,10 @@ export function property({
       );
     }
 
-    if (!(protoOrDescriptor as any).propertiesAndOptions) {
+    if (!(protoOrDescriptor as any)._propertiesAndOptions) {
       Object.defineProperty(
         protoOrDescriptor,
-        "propertiesAndOptions",
+        "_propertiesAndOptions",
         {
           enumerable: false,
           configurable: true,
@@ -82,7 +82,7 @@ export function property({
       );
     }
 
-    (protoOrDescriptor as any).propertiesAndOptions!.push({
+    (protoOrDescriptor as any)._propertiesAndOptions.push({
       property: name,
       reflect,
       render,

@@ -32,13 +32,12 @@ function isNull(input: unknown): input is null {
 }
 
 /**
- * This class is the reason why you are here. 
+ * This class is the reason why you are here.
  */
 export class Shadow extends HTMLElement {
   private renderingCount = 0;
   private waitingList = new Set<string>();
   private accessorsStore = new Map<string, unknown>();
-  private propertiesAndOptions?: Required<PropertyAndOptions[]>;
   /**
    * This boolean will be `true` when `connectedCallback` has been called and all
    * explicitly awaited properties have been set (the `waitingList` is empty).
@@ -70,7 +69,8 @@ export class Shadow extends HTMLElement {
    * inside of it.
  */
   connectedCallback() {
-    this.init(this.propertiesAndOptions || []);
+    // NOTE: `_propertiesAndOptions` was maybe defined by the `property` decorator.
+    this.init((this as any)._propertiesAndOptions || []);
   }
 
   /**
@@ -101,7 +101,7 @@ export class Shadow extends HTMLElement {
   /**
    * Call this method in 'connectedCallback' if you want to avoid using the
    * 'property' decorator. It assigns the accessors to the element's properties
-   * and starts rendering. The arguments are explained next to the `property` 
+   * and starts rendering. The arguments are explained next to the `property`
    * decorator.
    */
   init(propertiesAndOptions: PropertyAndOptions[]): void {
@@ -216,7 +216,7 @@ export class Shadow extends HTMLElement {
     return documentFragment;
   }
   /**
- * Calls the this.render() function, processes its return value and dispatches 
+ * Calls the this.render() function, processes its return value and dispatches
  * the event `_update`.
  */
 
@@ -260,7 +260,7 @@ export class Shadow extends HTMLElement {
   static styles: HTMLTemplateElement[] = [];
 
   /**
-   * The decorator `customElement` - if used - sets this static property to the 
+   * The decorator `customElement` - if used - sets this static property to the
    * custom element's tag name automatically.
  */
   static is?: string;
