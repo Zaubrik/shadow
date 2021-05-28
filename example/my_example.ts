@@ -9,6 +9,7 @@ import {
 
 @customElement("my-example")
 export class MyExample extends Shadow {
+  colors = ["yellow", "green", "pink", "red", "blue", "orange"];
   @property()
   h1Content = 0;
   @property()
@@ -26,31 +27,32 @@ export class MyExample extends Shadow {
       border-radius: 30px;
     }
     .text {
-      margin:50px;
+      margin: 50px;
       color: brown;
     }
     .myLi {
       width: 200px;
+      background-color: pink;
     }
   `;
 
   render() {
     return html`<h1>${this.h1Content}</h1>
-    <button id=myButton click=${this.clickHandler}>Count</button>
-      <p class=text>You can change values through...</p>
-      <p class=text>${this.firstContent}</p>
-      <p class=text>${this.secondContent}</p>
+      <button id="myButton" click=${this.clickHandler}>Count</button>
+      <p class="text">You can change values through...</p>
+      <p class="text">${this.firstContent}</p>
+      <p class="text">${this.secondContent}</p>
       <ul>
-        ${this.items.map((item) => html`<li @class=myLi>${item}</li>`)}
+        ${this.items.map((item) => html`<li @class="myLi">${item}</li>`)}
       </ul>`;
   }
 
   updated() {
-    const colors = ["yellow", "green", "pink", "red", "blue", "orange"];
     this.dom.class["myLi"].forEach((li, i) =>
       setInterval(
-        () => (li.style.background =
-          colors[Math.floor(Math.random() * (5 - 0 + 1)) + 0]),
+        () => (li.style.background = this.colors[
+          Math.floor(Math.random() * (5 - 0 + 1)) + 0
+        ]),
         500,
       )
     );
