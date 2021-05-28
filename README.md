@@ -91,6 +91,9 @@ export class MyExample extends Shadow {
 }
 ```
 
+You can find the `index.html` file
+[here](https://github.com/timonson/shadow/tree/main/example).
+
 ## API
 
 ### class Shadow extends HTMLElement
