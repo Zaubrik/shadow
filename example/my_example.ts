@@ -12,9 +12,9 @@ export class MyExample extends Shadow {
   @property()
   h1Content = 0;
   @property()
-  firstContent: Attribute = "";
+  firstContent: Attribute = null;
   @property()
-  secondContent: Attribute = "";
+  secondContent: Attribute = null;
   @property({ reflect: false, wait: true })
   items: string[] = [];
 
