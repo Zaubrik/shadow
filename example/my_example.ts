@@ -50,9 +50,8 @@ export class MyExample extends Shadow {
   updated() {
     this.dom.class["myLi"].forEach((li, i) =>
       setInterval(
-        () => (li.style.background = this.colors[
-          Math.floor(Math.random() * (5 - 0 + 1)) + 0
-        ]),
+        () => (li.style.background =
+          this.colors[Math.floor(Math.random() * 6)]),
         500,
       )
     );
