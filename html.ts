@@ -6,6 +6,7 @@ export type AllowedExpressions =
   | number
   | boolean
   | null
+  | undefined
   | HReturn
   | EventListener
   | Record<string, any>

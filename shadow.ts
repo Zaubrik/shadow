@@ -226,10 +226,10 @@ export class Shadow extends HTMLElement {
     while (this.shadowRoot.firstChild) {
       this.shadowRoot.removeChild(this.shadowRoot.firstChild);
     }
-    this.shadowRoot.appendChild(documentFragment);
     (this.constructor as typeof Shadow).styles.forEach((template) =>
       this.shadowRoot.append(template.content.cloneNode(true))
     );
+    this.shadowRoot.prepend(documentFragment);
     this.dispatchEvent(new CustomEvent("_update"));
     this.renderingCount++;
   }
