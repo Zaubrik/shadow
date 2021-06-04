@@ -18,6 +18,8 @@ export class MyExample extends Shadow {
   secondContent: Attribute = null;
   @property({ reflect: false, wait: true })
   items: string[] = [];
+  @property({ reflect: false })
+  anchorAttributes: { href?: string; ping?: string; target?: string } = {};
 
   static styles = css`
     h1 {
@@ -29,6 +31,9 @@ export class MyExample extends Shadow {
     .text {
       margin: 50px;
       color: brown;
+    }
+    a {
+      color: blue;
     }
     .myLi {
       width: 200px;
@@ -44,7 +49,8 @@ export class MyExample extends Shadow {
       <p class="text">${this.secondContent}</p>
       <ul>
         ${this.items.map((item) => html`<li @class="myLi">${item}</li>`)}
-      </ul>`;
+      </ul>
+      <p class="text"><a ...${this.anchorAttributes}>Anchor Text</a></p>`;
   }
 
   updated() {
