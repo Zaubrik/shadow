@@ -1,7 +1,8 @@
 # shadow
 
-Shadow is a base class inheriting from HTMLElement for Web Components and Custom
-Elements.
+Shadow is a base class inheriting from `HTMLElement` for Web Components and
+Custom Elements. Shadow has only one dependency:
+[htm (Hyperscript Tagged Markup)](https://github.com/developit/htm).
 
 ## Quick Start
 
@@ -173,12 +174,12 @@ rendering.
 Uses [htm (Hyperscript Tagged Markup)](https://github.com/developit/htm) under
 the hood which uses standard JavaScript Tagged Templates and works in all modern
 browsers. The function `html` takes a _tagged template_ and processes the
-`AllowedExpressions` where `false` and `null` are converted to an empty string
-and the `numbers` are _stringified_. The elements matching the id and class
-selectors marked with an `@` sign will later be added to the `this.dom` object.
-We add the `EventListeners` with `addEventListener(event, listener.bind(this))`
-so that you don't need to use arrow functions anymore. It parses SVG elements as
-well.
+`AllowedExpressions` where `false`, `null` and `undefined` are converted to an
+empty string and the `numbers` are _stringified_. The elements matching the id
+and class selectors marked with an `@` sign will later be added to the
+`this.dom` object. We add the `EventListeners` with
+`addEventListener(event, listener.bind(this))` so that you don't need to use
+arrow functions anymore. It parses SVG elements as well.
 
 ### function css(strings: TemplateStringsArray, ...values: (string | HTMLTemplateElement)[]): HTMLTemplateElement[]
 

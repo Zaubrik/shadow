@@ -10,9 +10,10 @@
     <my-example first-content="... attributes or ..."></my-example>
     <script type="module">
       const example = document.querySelector("my-example")
+      example.addCss(`#myButton{background:green;}`)
       example.secondContent = "properties."
-      example.items = ["one", "two", "three"]
       example.anchorAttributes = { href: "/", target: "_blank" }
+      example.items = ["one", "two", "three"]
     </script>
   </body>
 </html>

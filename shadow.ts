@@ -38,6 +38,7 @@ export class Shadow extends HTMLElement {
   private renderingCount = 0;
   private waitingList = new Set<string>();
   private accessorsStore = new Map<string, unknown>();
+  private dynamicCssStore: HTMLStyleElement[] = [];
   /**
    * This boolean will be `true` when `connectedCallback` has been called and all
    * explicitly awaited properties have been set (the `waitingList` is empty).
@@ -189,6 +190,13 @@ export class Shadow extends HTMLElement {
     }
   }
 
+  addCss(ruleSet: string, shouldRender = false) {
+    const style = document.createElement("style");
+    style.innerHTML = ruleSet;
+    this.dynamicCssStore.push(style);
+    if (shouldRender && this.connected) this.actuallyRender();
+  }
+
   private createFragment(...input: AllowedExpressions[]): DocumentFragment {
     const documentFragment = document.createDocumentFragment();
     input.flat(2).forEach((data) => {
@@ -215,11 +223,11 @@ export class Shadow extends HTMLElement {
     });
     return documentFragment;
   }
+
   /**
  * Calls the this.render() function, processes its return value and dispatches
  * the event `_update`.
  */
-
   private actuallyRender(): void {
     if (this.renderingCount > 0) this.dom = { id: {}, class: {} };
     const documentFragment = this.createFragment(this.render!());
@@ -229,6 +237,11 @@ export class Shadow extends HTMLElement {
     (this.constructor as typeof Shadow).styles.forEach((template) =>
       this.shadowRoot.append(template.content.cloneNode(true))
     );
+    if (this.dynamicCssStore.length > 0) {
+      this.dynamicCssStore.forEach((styleElement) =>
+        this.shadowRoot.append(styleElement.cloneNode(true))
+      );
+    }
     this.shadowRoot.prepend(documentFragment);
     this.dispatchEvent(new CustomEvent("_update"));
     this.renderingCount++;
