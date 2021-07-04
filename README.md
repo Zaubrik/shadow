@@ -1,8 +1,8 @@
 # shadow
 
-Shadow is a base class inheriting from `HTMLElement` for Web Components and
-Custom Elements. Shadow has only one dependency:
-[htm (Hyperscript Tagged Markup)](https://github.com/developit/htm).
+Shadow is simple base class for creating fast, lightweight web components with
+[htm](https://github.com/developit/htm).  
+Do it all with `deno bundle`: No transpiler or other tools are required.
 
 ## Quick Start
 
