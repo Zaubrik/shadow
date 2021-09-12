@@ -1,4 +1,4 @@
-import { assertTruthy, convertCamelToDash, ShadowError } from "./util.ts";
+import { convertCamelToDash, ShadowError } from "./util.ts";
 
 import type { PropertyAndOptions } from "./shadow.ts";
 
@@ -7,35 +7,39 @@ export type Constructor<T> = {
 };
 
 /**
- * The `customElement` decorator takes the tag name of the custom element and
- * registers the custom element.
- * The same tag name is assigned to the static `is` property.
+ * The decorator `customElement` takes the tag name of the custom element and
+ * registers the custom element. The same tag name is assigned to the static
+ * `is` property.
  */
 export function customElement(
   tagName: string,
 ): (clazz: Constructor<HTMLElement>) => void {
   return (clazz: Constructor<HTMLElement>) => {
-    assertTruthy(
-      typeof clazz === "function",
-      "Something went wrong with the 'customElement' decorator.",
-    );
-    Object.defineProperty(clazz, "is", {
-      value: tagName,
-    });
-    window.customElements.define(tagName, clazz);
-    return clazz;
+    if (typeof clazz === "function") {
+      Object.defineProperty(clazz, "is", {
+        value: tagName,
+      });
+      window.customElements.define(tagName, clazz);
+      return clazz;
+    } else {
+      throw new ShadowError(
+        "Something went wrong with the decorator 'customElement'.",
+      );
+    }
   };
 }
 
 /**
- * The `property` decorator takes an optional object as argument with four
+ * The decorator `property` takes an optional object as argument with four
  * optional properties:
  * 1. Setting `reflect` to false would stop the element's attribute from synchronising.
  * 2. If you don't want the changing of the property to cause a rerendering, then
  *    set `render` to false.
- * 3. If you plan to use properties instead of attributes as data input, setting `wait`
- *   to true would reduce the amount of renderings from 2 to 1 (you can just ignore it).
- * 4. The `assert` boolean checks if the input has a truthy value.
+ * 3. If you use properties instead of attributes as data input, setting `wait`
+ * to true would reduce the amount of renderings because it waits for the property's
+ * assignment (practically, you can just ignore it).
+ * 4. The boolean `assert` checks if the input has a truthy value. Otherwise it
+ * throws an `ShadowError`.
  */
 export function property({
   reflect = true,
@@ -47,8 +51,9 @@ export function property({
   name: string,
 ) => void {
   return (protoOrDescriptor: HTMLElement, name: string) => {
-    assertTruthy(name, "The property name must be a non-empty string");
-
+    if (name.length < 3) {
+      throw new ShadowError(`The property's name '${name}' is too short.`);
+    }
     if (reflect === true) {
       const observedAttributesArray =
         (protoOrDescriptor.constructor as any).observedAttributes || [];
