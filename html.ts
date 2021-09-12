@@ -1,5 +1,5 @@
 import htm from "https://unpkg.com/htm@3.0.4/mini/index.mjs";
-import { assertString } from "./util.ts";
+import { stringify } from "./util.ts";
 
 export type AllowedExpressions =
   | string
@@ -73,6 +73,8 @@ export function h(
       element.setAttribute(key, JSON.stringify(props[key]));
     } else if (typeof props[key] === "string") {
       element.setAttribute(key, props[key]);
+    } else if (props[key] === null || props[key] === false) {
+      element.removeAttribute(key);
     }
   }
   // TODO: Improve SVG parsing.
@@ -80,7 +82,7 @@ export function h(
     element.innerHTML = children.flat(2).reduce<string>(
       (acc, child) =>
         acc +
-        (isHReturn(child) ? child.element.innerHTML : assertString(child)),
+        (isHReturn(child) ? child.element.innerHTML : stringify(child)),
       "",
     );
   } else {
@@ -89,7 +91,7 @@ export function h(
         collection.push(...child.collection);
         element.appendChild(child.element);
       } else {
-        const str = assertString(child);
+        const str = stringify(child);
         if (str) element.appendChild(document.createTextNode(str));
       }
     }
