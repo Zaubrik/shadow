@@ -1,8 +1,8 @@
 import {
-  assertString,
-  assertTruthy,
   convertCamelToDash,
   convertDashToCamel,
+  ShadowError,
+  stringify,
 } from "./util.ts";
 import { AllowedExpressions, isHReturn } from "./html.ts";
 
@@ -32,12 +32,21 @@ function isNull(input: unknown): input is null {
 }
 
 /**
- * This class is the reason why you are here.
+ * The class `Shadow` is the reason why you are here.
  */
 export class Shadow extends HTMLElement {
   private renderingCount = 0;
   private waitingList = new Set<string>();
   private accessorsStore = new Map<string, unknown>();
+  private propertiesAndOptions: PropertyAndOptions[];
+  /**
+   * When properties had been assigned before the custom element was defined, the
+   * values are stored in `presetProperties` and processed accordingly.
+ */
+  private presetProperties = new Map<string, unknown>();
+  /**
+   * Stores the CSS which has been added by the function `addCss`.
+ */
   private dynamicCssStore: HTMLStyleElement[] = [];
   /**
    * This boolean will be `true` when `connectedCallback` has been called and all
@@ -52,6 +61,14 @@ export class Shadow extends HTMLElement {
   dom: Dom = { id: {}, class: {} };
   constructor() {
     super();
+    // NOTE: `_propertiesAndOptions` is defined by the `property` decorator.
+    this.propertiesAndOptions = (this as any)._propertiesAndOptions || [];
+    this.propertiesAndOptions.forEach((
+      { property }: PropertyAndOptions,
+    ) =>
+      (this as any)[property] !== undefined &&
+      this.presetProperties.set(property, (this as any)[property])
+    );
     if (this.firstUpdated) {
       this.addEventListener(
         "_update",
@@ -70,8 +87,7 @@ export class Shadow extends HTMLElement {
    * inside of it.
  */
   connectedCallback() {
-    // NOTE: `_propertiesAndOptions` was maybe defined by the `property` decorator.
-    this.init((this as any)._propertiesAndOptions || []);
+    this.init(this.propertiesAndOptions);
   }
 
   /**
@@ -117,14 +133,17 @@ export class Shadow extends HTMLElement {
     ) => {
       if (wait && !this.connected) {
         this.waitingList.add(property);
-      } else if (assert) {
-        assertTruthy(
-          (this as any)[property],
+      } else if (assert && !(this as any)[property]) {
+        throw new ShadowError(
           `The property ${property} must have a truthy value.`,
         );
       }
 
-      this.accessorsStore.set(property, (this as any)[property]);
+      if (this.presetProperties.has(property)) {
+        this.accessorsStore.set(property, this.presetProperties.get(property));
+      } else {
+        this.accessorsStore.set(property, (this as any)[property]);
+      }
 
       if (reflect && isNull(this.getAttribute(property))) {
         this.updateAttribute(
@@ -141,9 +160,8 @@ export class Shadow extends HTMLElement {
           this.accessorsStore.set(property, value);
           if (wait) {
             this.waitingList.delete(property);
-            if (assert) {
-              assertTruthy(
-                (this as any)[property],
+            if (assert && !(this as any)[property]) {
+              throw new ShadowError(
                 `The property ${property} must have a truthy value.`,
               );
             }
@@ -175,26 +193,36 @@ export class Shadow extends HTMLElement {
  */
   update(name: string, newValue: Attribute): void {
     const property = convertDashToCamel(name);
-    assertTruthy(property in this, `The property '${property}' doen't exist.`);
-    if (
-      (this as any)[property] !== newValue &&
-      JSON.stringify((this as any)[property]) !== newValue
-    ) {
-      try {
-        (this as any)[property] = isNull(newValue)
-          ? newValue
-          : JSON.parse(newValue);
-      } catch {
-        (this as any)[property] = newValue;
+    if (property in this) {
+      if (
+        (this as any)[property] !== newValue &&
+        JSON.stringify((this as any)[property]) !== newValue
+      ) {
+        try {
+          (this as any)[property] = isNull(newValue)
+            ? newValue
+            : JSON.parse(newValue);
+        } catch {
+          (this as any)[property] = newValue;
+        }
       }
+    } else {
+      throw new ShadowError(
+        `The property '${property}' doen't exist on ${this.constructor.name}.`,
+      );
     }
   }
 
-  addCss(ruleSet: string, shouldRender = false) {
+  /**
+   * Adds CSS to the shadowRoot dynamically. Pass `true` as second argument if
+   * you want the element to be rerendered, e.g. when you call this function
+   * after the first render.
+ */
+  addCss(ruleSet: string, render = false) {
     const style = document.createElement("style");
     style.innerHTML = ruleSet;
     this.dynamicCssStore.push(style);
-    if (shouldRender && this.connected) this.actuallyRender();
+    if (render && this.connected) this.actuallyRender();
   }
 
   private createFragment(...input: AllowedExpressions[]): DocumentFragment {
@@ -217,7 +245,7 @@ export class Shadow extends HTMLElement {
         });
       } else {
         documentFragment.appendChild(
-          document.createTextNode(assertString(data)),
+          document.createTextNode(stringify(data)),
         );
       }
     });
@@ -245,6 +273,7 @@ export class Shadow extends HTMLElement {
     this.shadowRoot.prepend(documentFragment);
     this.dispatchEvent(new CustomEvent("_update"));
     this.renderingCount++;
+    // console.log((this.constructor as typeof Shadow).is, this.renderingCount);
   }
 
   /**
