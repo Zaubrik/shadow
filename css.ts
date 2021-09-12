@@ -1,5 +1,5 @@
 /**
- * Returns an `HTMLTemplateElement` created with the passed html string. 
+ * Returns an `HTMLTemplateElement` created with the passed html string.
  */
 function createHtmlTemplate(html: string): HTMLTemplateElement {
   const template = document.createElement("template");
@@ -8,7 +8,7 @@ function createHtmlTemplate(html: string): HTMLTemplateElement {
 }
 
 /**
- * The `css` tag function parses css strings which can contain expressions with 
+ * The `css` tag function parses css strings which can contain expressions with
  * the type string or HTMLTemplateElements (containing a script element).
  */
 export function css(
