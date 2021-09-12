@@ -20,6 +20,9 @@ export class MyExample extends Shadow {
   items: string[] = [];
   @property({ reflect: false })
   anchorAttributes: { href?: string; ping?: string; target?: string } = {};
+  constructor() {
+    super();
+  }
 
   static styles = css`
     h1 {

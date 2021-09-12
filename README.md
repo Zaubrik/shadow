@@ -1,7 +1,7 @@
 # shadow
 
 Shadow is simple base class for creating fast, lightweight web components with
-[htm](https://github.com/developit/htm).  
+[htm](https://github.com/developit/htm).\
 Do it all with `deno bundle`: No transpiler or other tools are required.
 
 ## Quick Start
@@ -34,21 +34,24 @@ import {
   html,
   property,
   Shadow,
-} from "https://deno.land/x/shadow/mod.ts"
+} from "https://deno.land/x/shadow/mod.ts";
 
 @customElement("my-example")
 export class MyExample extends Shadow {
-  colors = ["yellow", "green", "pink", "red", "blue", "orange"]
+  colors = ["yellow", "green", "pink", "red", "blue", "orange"];
   @property()
-  h1Content = 0
+  h1Content = 0;
   @property()
-  firstContent: Attribute = null
+  firstContent: Attribute = null;
   @property()
-  secondContent: Attribute = null
+  secondContent: Attribute = null;
   @property({ reflect: false, wait: true })
-  items: string[] = []
+  items: string[] = [];
   @property({ reflect: false })
-  anchorAttributes: { href?: string; ping?: string; target?: string } = {}
+  anchorAttributes: { href?: string; ping?: string; target?: string } = {};
+  constructor() {
+    super();
+  }
 
   static styles = css`
     h1 {
@@ -68,7 +71,7 @@ export class MyExample extends Shadow {
       width: 200px;
       background-color: pink;
     }
-  `
+  `;
 
   render() {
     return html`<h1>${this.h1Content}</h1>
@@ -79,21 +82,21 @@ export class MyExample extends Shadow {
       <ul>
         ${this.items.map((item) => html`<li @class="myLi">${item}</li>`)}
       </ul>
-      <p class="text"><a ...${this.anchorAttributes}>Anchor Text</a></p>`
+      <p class="text"><a ...${this.anchorAttributes}>Anchor Text</a></p>`;
   }
 
   updated() {
     this.dom.class["myLi"].forEach((li, i) =>
       setInterval(
-        () =>
-          (li.style.background = this.colors[Math.floor(Math.random() * 6)]),
-        500
+        () => (li.style.background =
+          this.colors[Math.floor(Math.random() * 6)]),
+        500,
       )
-    )
+    );
   }
 
   clickHandler(e: MouseEvent) {
-    return this.h1Content++
+    return this.h1Content++;
   }
 }
 ```
@@ -197,11 +200,11 @@ property.
 The `property` decorator takes an optional object as argument with four optional
 properties:
 
-1.  Setting `reflect` to false would stop the element's attribute from
-    synchronising.
-2.  If you don't want the changing of the property to cause a rerendering, then
-    set `render` to false.
-3.  If you plan to use properties instead of attributes as data input, setting
-    `wait` to true would reduce the amount of renderings from 2 to 1 (you can
-    just ignore it).
-4.  The `assert` boolean checks if the input has a truthy value.
+1. Setting `reflect` to false would stop the element's attribute from
+   synchronising.
+2. If you don't want the changing of the property to cause a rerendering, then
+   set `render` to false.
+3. If you plan to use properties instead of attributes as data input, setting
+   `wait` to true would reduce the amount of renderings from 2 to 1 (you can
+   just ignore it).
+4. The `assert` boolean checks if the input has a truthy value.
