@@ -6,16 +6,7 @@ export function convertCamelToDash(str: string) {
   return str.replace(/([a-zA-Z0-9])(?=[A-Z])/g, "$1-").toLowerCase();
 }
 
-/**
- * Throws an error if the passed expression is falsey.
- */
-export function assertTruthy(expr: unknown, msg = ""): asserts expr {
-  if (!expr) {
-    throw new ShadowError(msg);
-  }
-}
-
-export function assertString(input: unknown): string {
+export function stringify(input: unknown): string {
   return typeof input === "string"
     ? input
     : typeof input === "number"
