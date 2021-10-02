@@ -42,22 +42,22 @@ export class Shadow extends HTMLElement {
   /**
    * When properties had been assigned before the custom element was defined, the
    * values are stored in `presetProperties` and processed accordingly.
- */
+   */
   private presetProperties = new Map<string, unknown>();
   /**
    * Stores the CSS which has been added by the function `addCss`.
- */
+   */
   private dynamicCssStore: HTMLStyleElement[] = [];
   /**
    * This boolean will be `true` when `connectedCallback` has been called and all
    * explicitly awaited properties have been set (the `waitingList` is empty).
- */
+   */
   connected: boolean = false;
   shadowRoot: ShadowRoot = this.attachShadow({ mode: "open" });
   /**
    * The child elements, which match the id and class selectors marked with the
    * `@` sign, are stored in the `dom` object.
- */
+   */
   dom: Dom = { id: {}, class: {} };
   constructor() {
     super();
@@ -85,7 +85,7 @@ export class Shadow extends HTMLElement {
    * A native custom elements' [lifecycle callback](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements).
    * When you use this callback, you probably want to call `super.connectedCallback()`
    * inside of it.
- */
+   */
   connectedCallback() {
     this.init(this.propertiesAndOptions);
   }
@@ -93,7 +93,7 @@ export class Shadow extends HTMLElement {
   /**
    * A native custom elements' lifecycle callback. Here, it manages the reflecting
    * of properties to attributes.
- */
+   */
   attributeChangedCallback(
     name: string,
     oldValue: Attribute,
@@ -104,8 +104,8 @@ export class Shadow extends HTMLElement {
   }
 
   /**
- * Sets or removes attributes.
- */
+   * Sets or removes attributes.
+   */
   private updateAttribute(attributeName: string, value: unknown): void {
     if (value === null) return this.removeAttribute(attributeName);
     else {
@@ -189,8 +189,8 @@ export class Shadow extends HTMLElement {
   }
 
   /**
- * Compares and reflects properties to attributes.
- */
+   * Compares and reflects properties to attributes.
+   */
   update(name: string, newValue: Attribute): void {
     const property = convertDashToCamel(name);
     if (property in this) {
@@ -217,7 +217,7 @@ export class Shadow extends HTMLElement {
    * Adds CSS to the shadowRoot dynamically. Pass `true` as second argument if
    * you want the element to be rerendered, e.g. when you call this function
    * after the first render.
- */
+   */
   addCss(ruleSet: string, render = false) {
     const style = document.createElement("style");
     style.innerHTML = ruleSet;
@@ -253,9 +253,9 @@ export class Shadow extends HTMLElement {
   }
 
   /**
- * Calls the this.render() function, processes its return value and dispatches
- * the event `_update`.
- */
+   * Calls the this.render() function, processes its return value and dispatches
+   * the event `_update`.
+   */
   private actuallyRender(): void {
     if (this.renderingCount > 0) this.dom = { id: {}, class: {} };
     const documentFragment = this.createFragment(this.render!());
@@ -280,30 +280,30 @@ export class Shadow extends HTMLElement {
    * Is called by the method `actuallyRender` which renders the custom element.
    * It must return the return type of the function `html` which is
    * `AllowedExpressions`.
- */
+   */
   render?(): AllowedExpressions;
 
   /**
    * A modifiable lifecycle callback which is called after the first update which
    * includes rendering.
- */
+   */
   firstUpdated?(event: Event): void;
 
   /**
    * A modifiable lifecycle callback which is called after each update which
    * includes rendering.
- */
+   */
   updated?(event: Event): void;
 
   /**
    * The return type of the function `css`, which is an array of HTMLTemplateElements
    * containing a script element, is assigned to this static property.
-  */
+   */
   static styles: HTMLTemplateElement[] = [];
 
   /**
    * The decorator `customElement` - if used - sets this static property to the
    * custom element's tag name automatically.
- */
+   */
   static is?: string;
 }
