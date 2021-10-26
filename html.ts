@@ -80,9 +80,10 @@ export function h(
   // TODO: Improve SVG parsing.
   if (type === "svg") {
     element.innerHTML = children.flat(2).reduce<string>(
-      (acc, child) =>
-        acc +
-        (isHReturn(child) ? child.element.innerHTML : stringify(child)),
+      (acc, child) => {
+        return acc +
+          (isHReturn(child) ? child.element.outerHTML : stringify(child));
+      },
       "",
     );
   } else {
