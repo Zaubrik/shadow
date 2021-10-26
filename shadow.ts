@@ -135,7 +135,7 @@ export class Shadow extends HTMLElement {
         this.waitingList.add(property);
       } else if (assert && !(this as any)[property]) {
         throw new ShadowError(
-          `The property ${property} must have a truthy value.`,
+          `The property '${property}' must have a truthy value.`,
         );
       }
 
@@ -162,7 +162,7 @@ export class Shadow extends HTMLElement {
             this.waitingList.delete(property);
             if (assert && !(this as any)[property]) {
               throw new ShadowError(
-                `The property ${property} must have a truthy value.`,
+                `The property '${property}' must have a truthy value.`,
               );
             }
             if (this.waitingList.size === 0) {
@@ -208,7 +208,7 @@ export class Shadow extends HTMLElement {
       }
     } else {
       throw new ShadowError(
-        `The property '${property}' doen't exist on ${this.constructor.name}.`,
+        `The property '${property}' doen't exist on '${this.constructor.name}'.`,
       );
     }
   }
@@ -253,7 +253,7 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * Calls the this.render() function, processes its return value and dispatches
+   * Calls the function `this.render()`, processes the return value and dispatches
    * the event `_update`.
    */
   private actuallyRender(): void {
