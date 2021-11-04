@@ -52,15 +52,16 @@ export class Shadow extends HTMLElement {
    * This boolean will be `true` when `connectedCallback` has been called and all
    * explicitly awaited properties have been set (the `waitingList` is empty).
    */
-  connected: boolean = false;
-  shadowRoot: ShadowRoot = this.attachShadow({ mode: "open" });
+  _connected: boolean = false;
+  root: ShadowRoot;
   /**
-   * The child elements, which match the id and class selectors marked with the
-   * `@` sign, are stored in the `dom` object.
+   * In `this.dom` are the child elements stored which match the id and class
+   * selectors marked with the special `@` sign.
    */
   dom: Dom = { id: {}, class: {} };
-  constructor() {
+  constructor(init: ShadowRootInit = { mode: "open" }) {
     super();
+    this.root = this.attachShadow(init);
     // NOTE: `_propertiesAndOptions` is defined by the `property` decorator.
     this.propertiesAndOptions = (this as any)._propertiesAndOptions || [];
     this.propertiesAndOptions.forEach((
@@ -131,7 +132,7 @@ export class Shadow extends HTMLElement {
         assert = false,
       }: PropertyAndOptions,
     ) => {
-      if (wait && !this.connected) {
+      if (wait && !this._connected) {
         this.waitingList.add(property);
       } else if (assert && !(this as any)[property]) {
         throw new ShadowError(
@@ -166,7 +167,7 @@ export class Shadow extends HTMLElement {
               );
             }
             if (this.waitingList.size === 0) {
-              if (!this.connected) this.connected = true;
+              if (!this._connected) this._connected = true;
             }
           }
           if (
@@ -176,14 +177,14 @@ export class Shadow extends HTMLElement {
           ) {
             this.updateAttribute(attributeName, value);
           }
-          if (this.connected && render) {
+          if (this._connected && render) {
             this.actuallyRender();
           }
         },
       });
     });
     if (this.waitingList.size === 0) {
-      if (!this.connected) this.connected = true;
+      if (!this._connected) this._connected = true;
       this.actuallyRender();
     }
   }
@@ -222,7 +223,7 @@ export class Shadow extends HTMLElement {
     const style = document.createElement("style");
     style.innerHTML = ruleSet;
     this.dynamicCssStore.push(style);
-    if (render && this.connected) this.actuallyRender();
+    if (render && this._connected) this.actuallyRender();
   }
 
   private createFragment(...input: AllowedExpressions[]): DocumentFragment {
@@ -259,18 +260,18 @@ export class Shadow extends HTMLElement {
   private actuallyRender(): void {
     if (this.renderingCount > 0) this.dom = { id: {}, class: {} };
     const documentFragment = this.createFragment(this.render!());
-    while (this.shadowRoot.firstChild) {
-      this.shadowRoot.removeChild(this.shadowRoot.firstChild);
+    while (this.root.firstChild) {
+      this.root.removeChild(this.root.firstChild);
     }
     (this.constructor as typeof Shadow).styles.forEach((template) =>
-      this.shadowRoot.append(template.content.cloneNode(true))
+      this.root.append(template.content.cloneNode(true))
     );
     if (this.dynamicCssStore.length > 0) {
       this.dynamicCssStore.forEach((styleElement) =>
-        this.shadowRoot.append(styleElement.cloneNode(true))
+        this.root.append(styleElement.cloneNode(true))
       );
     }
-    this.shadowRoot.prepend(documentFragment);
+    this.root.prepend(documentFragment);
     this.dispatchEvent(new CustomEvent("_update"));
     this.renderingCount++;
     // console.log((this.constructor as typeof Shadow).is, this.renderingCount);
