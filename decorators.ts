@@ -32,13 +32,13 @@ export function customElement(
 /**
  * The decorator `property` takes an optional object as argument with four
  * optional properties:
- * 1. Setting `reflect` to false would stop the element's attribute from synchronising.
+ * 1. Setting `reflect` to `false` would stop the element's attribute from synchronising.
  * 2. If you don't want the changing of the property to cause a rerendering, then
- *    set `render` to false.
+ *    set `render` to `false`.
  * 3. If you use properties instead of attributes as data input, setting `wait`
- * to true would reduce the amount of renderings because it waits for the property's
+ * to `true` would reduce the amount of renderings because it waits for the property's
  * assignment (practically, you can just ignore it).
- * 4. The boolean `assert` checks if the input has a truthy value. Otherwise it
+ * 4. The boolean `assert` checks if the input has a *truthy* value. Otherwise it
  * throws an `ShadowError`.
  */
 export function property({
@@ -51,7 +51,7 @@ export function property({
   name: string,
 ) => void {
   return (protoOrDescriptor: HTMLElement, name: string) => {
-    if (name.length < 3) {
+    if (name.length < 1) {
       throw new ShadowError(`The property's name '${name}' is too short.`);
     }
     if (reflect === true) {
