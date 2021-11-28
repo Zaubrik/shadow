@@ -39,6 +39,7 @@ export class Shadow extends HTMLElement {
   private waitingList = new Set<string>();
   private accessorsStore = new Map<string, unknown>();
   private propertiesAndOptions: PropertyAndOptions[];
+  private _updateCustomEvent = new CustomEvent("_update");
   /**
    * When properties had been assigned before the custom element was defined, the
    * values are stored in `presetProperties` and processed accordingly.
@@ -272,7 +273,7 @@ export class Shadow extends HTMLElement {
       );
     }
     this.root.prepend(documentFragment);
-    this.dispatchEvent(new CustomEvent("_update"));
+    this.dispatchEvent(this._updateCustomEvent);
     this.renderingCount++;
     // console.log((this.constructor as typeof Shadow).is, this.renderingCount);
   }
