@@ -1,8 +1,8 @@
-import { convertCamelToDash, ShadowError } from "./util.ts";
+import { convertCamelToDash } from "./util.ts";
 
 import type { PropertyAndOptions } from "./shadow.ts";
 
-export type Constructor<T> = {
+type Constructor<T> = {
   new (...args: any[]): T;
 };
 
@@ -15,17 +15,11 @@ export function customElement(
   tagName: string,
 ): (clazz: Constructor<HTMLElement>) => void {
   return (clazz: Constructor<HTMLElement>) => {
-    if (typeof clazz === "function") {
-      Object.defineProperty(clazz, "is", {
-        value: tagName,
-      });
-      window.customElements.define(tagName, clazz);
-      return clazz;
-    } else {
-      throw new ShadowError(
-        "Something went wrong with the decorator 'customElement'.",
-      );
-    }
+    Object.defineProperty(clazz, "is", {
+      value: tagName,
+    });
+    window.customElements.define(tagName, clazz);
+    return clazz;
   };
 }
 
@@ -51,9 +45,6 @@ export function property({
   name: string,
 ) => void {
   return (protoOrDescriptor: HTMLElement, name: string) => {
-    if (name.length < 1) {
-      throw new ShadowError(`The property's name '${name}' is too short.`);
-    }
     if (reflect === true) {
       const observedAttributesArray =
         (protoOrDescriptor.constructor as any).observedAttributes || [];
