@@ -14,10 +14,6 @@ export function stringify(input: unknown): string {
     : "";
 }
 
-export class ShadowError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.message = message;
-    this.name = this.constructor.name;
-  }
+export function isNull(input: unknown): input is null {
+  return input === null;
 }

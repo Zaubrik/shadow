@@ -1,7 +1,7 @@
 import {
   convertCamelToDash,
   convertDashToCamel,
-  ShadowError,
+  isNull,
   stringify,
 } from "./util.ts";
 import { AllowedExpressions, isHReturn } from "./html.ts";
@@ -24,11 +24,12 @@ type Dom = {
   class: Record<string, HTMLElement[]>;
 };
 
-/**
- * Returns true if the passed value is null. Otherwise it returns false.
- */
-function isNull(input: unknown): input is null {
-  return input === null;
+class ShadowError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.message = message;
+    this.name = this.constructor.name;
+  }
 }
 
 /**
