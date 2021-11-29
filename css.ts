@@ -1,4 +1,4 @@
-import { createHtmlTemplate } from "./util.ts";
+import { createTemplate } from "./util.ts";
 
 /**
  * The `css` tag function parses css strings which can contain expressions with
@@ -10,7 +10,7 @@ export function css(
 ): HTMLTemplateElement[] {
   const cssTemplates = [];
   cssTemplates.push(
-    createHtmlTemplate(`<style>${
+    createTemplate(`<style>${
       values.reduce(
         (acc, value, i) => {
           if (value instanceof HTMLTemplateElement) {

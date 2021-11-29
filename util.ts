@@ -9,7 +9,7 @@ export function convertCamelToDash(str: string) {
 /**
  * Returns an `HTMLTemplateElement` created with the passed html string.
  */
-export function createHtmlTemplate(html: string): HTMLTemplateElement {
+export function createTemplate(html: string): HTMLTemplateElement {
   const template = document.createElement("template");
   template.innerHTML = html;
   return template;

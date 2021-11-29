@@ -1,7 +1,7 @@
 import {
   convertCamelToDash,
   convertDashToCamel,
-  createHtmlTemplate,
+  createTemplate,
   isNull,
   stringify,
 } from "./util.ts";
@@ -223,7 +223,7 @@ export class Shadow extends HTMLElement {
    * after the first render.
    */
   addCss(ruleSet: string, render = false) {
-    this.dynamicCssStore.push(createHtmlTemplate(`<style>${ruleSet}</style>`));
+    this.dynamicCssStore.push(createTemplate(`<style>${ruleSet}</style>`));
     if (render && this._connected) this.actuallyRender();
   }
 
