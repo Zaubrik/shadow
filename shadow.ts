@@ -1,6 +1,7 @@
 import {
   convertCamelToDash,
   convertDashToCamel,
+  createHtmlTemplate,
   isNull,
   stringify,
 } from "./util.ts";
@@ -49,7 +50,7 @@ export class Shadow extends HTMLElement {
   /**
    * Stores the CSS which has been added by the function `addCss`.
    */
-  private dynamicCssStore: HTMLStyleElement[] = [];
+  private dynamicCssStore: HTMLTemplateElement[] = [];
   /**
    * This boolean will be `true` when `connectedCallback` has been called and all
    * explicitly awaited properties have been set (the `waitingList` is empty).
@@ -222,9 +223,7 @@ export class Shadow extends HTMLElement {
    * after the first render.
    */
   addCss(ruleSet: string, render = false) {
-    const style = document.createElement("style");
-    style.innerHTML = ruleSet;
-    this.dynamicCssStore.push(style);
+    this.dynamicCssStore.push(createHtmlTemplate(`<style>${ruleSet}</style>`));
     if (render && this._connected) this.actuallyRender();
   }
 
@@ -269,8 +268,8 @@ export class Shadow extends HTMLElement {
       this.root.append(template.content.cloneNode(true))
     );
     if (this.dynamicCssStore.length > 0) {
-      this.dynamicCssStore.forEach((styleElement) =>
-        this.root.append(styleElement.cloneNode(true))
+      this.dynamicCssStore.forEach((styleTemplate) =>
+        this.root.append(styleTemplate.content.cloneNode(true))
       );
     }
     this.root.prepend(documentFragment);
