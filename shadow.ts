@@ -43,7 +43,7 @@ export class Shadow extends HTMLElement {
   private propertiesAndOptions: PropertyAndOptions[];
   private _updateCustomEvent = new CustomEvent("_update");
   /**
-   * When properties had been assigned before the custom element was defined, the
+   * When properties are assigned before the custom element has been defined, the
    * values are stored in `presetProperties` and processed accordingly.
    */
   private presetProperties = new Map<string, unknown>();
@@ -67,9 +67,7 @@ export class Shadow extends HTMLElement {
     this.root = this.attachShadow(init);
     // NOTE: `_propertiesAndOptions` is defined by the `property` decorator.
     this.propertiesAndOptions = (this as any)._propertiesAndOptions || [];
-    this.propertiesAndOptions.forEach((
-      { property }: PropertyAndOptions,
-    ) =>
+    this.propertiesAndOptions.forEach(({ property }) =>
       (this as any)[property] !== undefined &&
       this.presetProperties.set(property, (this as any)[property])
     );
