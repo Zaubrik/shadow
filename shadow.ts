@@ -33,9 +33,6 @@ class ShadowError extends Error {
   }
 }
 
-/**
- * The class `Shadow` is the reason why you are here.
- */
 export class Shadow extends HTMLElement {
   private _renderingCount = 0;
   private _waitingList = new Set<string>();
@@ -51,12 +48,19 @@ export class Shadow extends HTMLElement {
    * explicitly awaited properties have been set (i.e. the `_waitingList` is empty).
    */
   private _connected: boolean = false;
+  /**
+   * Access the `shadowRoot` through the property `root`.
+   */
   root: ShadowRoot;
   /**
    * In `this.dom` are the child elements stored which match the id and class
    * selectors marked with the special sign `@`.
    */
   dom: Dom = { id: {}, class: {} };
+  /**
+   * The constructor of `Shadow` takes the optional object `ShadowRootInit` which
+   * will be passed to the native method `attachShadow`.
+   */
   constructor(init: ShadowRootInit = { mode: "open" }) {
     super();
     this.root = this.attachShadow(init);
