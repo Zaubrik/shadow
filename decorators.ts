@@ -30,7 +30,7 @@ export function customElement(
  * 2. If you don't want the changing of the property to cause a rerendering, then
  *    set `render` to `false`.
  * 3. If you use properties instead of attributes as data input, setting `wait`
- * to `true` would reduce the amount of renderings because it waits for the property's
+ * to `true` reduces the amount of renderings because it waits for the property's
  * assignment (practically, you can just ignore it).
  * 4. The boolean `assert` checks if the input has a *truthy* value. Otherwise it
  * throws an `ShadowError`.
@@ -65,10 +65,10 @@ export function property({
       );
     }
 
-    if (!(protoOrDescriptor as any)._propertiesAndOptions) {
+    if (!(protoOrDescriptor as any).__propertiesAndOptions) {
       Object.defineProperty(
         protoOrDescriptor,
-        "_propertiesAndOptions",
+        "__propertiesAndOptions",
         {
           enumerable: false,
           configurable: true,
@@ -78,7 +78,7 @@ export function property({
       );
     }
 
-    (protoOrDescriptor as any)._propertiesAndOptions.push({
+    (protoOrDescriptor as any).__propertiesAndOptions.push({
       property: name,
       reflect,
       render,

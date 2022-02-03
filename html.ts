@@ -73,7 +73,9 @@ export function h(
       element.setAttribute(key, JSON.stringify(props[key]));
     } else if (typeof props[key] === "string") {
       element.setAttribute(key, props[key]);
-    } else if (props[key] === null || props[key] === false) {
+    } else if (
+      props[key] === null || props[key] === false || props[key] === undefined
+    ) {
       element.removeAttribute(key);
     }
   }

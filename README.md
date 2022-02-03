@@ -100,6 +100,3 @@ export class MyExample extends Shadow {
   }
 }
 ```
-
-You can find the file `index.html`
-[here](https://github.com/timonson/shadow/tree/main/example).

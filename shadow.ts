@@ -37,49 +37,46 @@ class ShadowError extends Error {
  * The class `Shadow` is the reason why you are here.
  */
 export class Shadow extends HTMLElement {
-  private renderingCount = 0;
-  private waitingList = new Set<string>();
-  private accessorsStore = new Map<string, unknown>();
-  private propertiesAndOptions: PropertyAndOptions[];
+  private _renderingCount = 0;
+  private _waitingList = new Set<string>();
+  private _accessorsStore = new Map<string, unknown>();
+  private _propertiesAndOptions: PropertyAndOptions[];
   private _updateCustomEvent = new CustomEvent("_update");
-  /**
-   * When properties are assigned before the custom element has been defined, the
-   * values are stored in `presetProperties` and processed accordingly.
-   */
-  private presetProperties = new Map<string, unknown>();
   /**
    * Stores the CSS which has been added by the function `addCss`.
    */
-  private dynamicCssStore: HTMLTemplateElement[] = [];
+  private _dynamicCssStore: HTMLTemplateElement[] = [];
   /**
    * This boolean will be `true` when `connectedCallback` has been called and all
-   * explicitly awaited properties have been set (the `waitingList` is empty).
+   * explicitly awaited properties have been set (i.e. the `_waitingList` is empty).
    */
   _connected: boolean = false;
   root: ShadowRoot;
   /**
    * In `this.dom` are the child elements stored which match the id and class
-   * selectors marked with the special `@` sign.
+   * selectors marked with the special sign `@`.
    */
   dom: Dom = { id: {}, class: {} };
   constructor(init: ShadowRootInit = { mode: "open" }) {
     super();
     this.root = this.attachShadow(init);
-    // NOTE: `_propertiesAndOptions` is defined by the `property` decorator.
-    this.propertiesAndOptions = (this as any)._propertiesAndOptions || [];
-    this.propertiesAndOptions.forEach(({ property }) =>
+    // NOTE: `__propertiesAndOptions` is defined by the `property` decorator.
+    this._propertiesAndOptions = (this as any).__propertiesAndOptions || [];
+    // When properties are assigned before the custom element has been defined,
+    // the values are already stored in `_accessorsStore`.
+    this._propertiesAndOptions.forEach(({ property }) => {
       (this as any)[property] !== undefined &&
-      this.presetProperties.set(property, (this as any)[property])
-    );
+        this._accessorsStore.set(property, (this as any)[property]);
+    });
     if (this.firstUpdated) {
       this.addEventListener(
         "_update",
-        (event: Event) => this.firstUpdated!(event),
+        (event: any) => this.firstUpdated!(event),
         { once: true },
       );
     }
     if (this.updated) {
-      this.addEventListener("_update", (event: Event) => this.updated!(event));
+      this.addEventListener("_update", (event: any) => this.updated!(event));
     }
   }
 
@@ -89,7 +86,7 @@ export class Shadow extends HTMLElement {
    * inside of it.
    */
   connectedCallback() {
-    this.init(this.propertiesAndOptions);
+    this.init(this._propertiesAndOptions);
   }
 
   /**
@@ -102,13 +99,13 @@ export class Shadow extends HTMLElement {
     newValue: Attribute,
   ) {
     if (newValue === oldValue) return;
-    else return this.update(name, newValue);
+    else return this._update(name, newValue);
   }
 
   /**
    * Sets or removes attributes.
    */
-  private updateAttribute(attributeName: string, value: unknown): void {
+  private _updateAttribute(attributeName: string, value: unknown): void {
     if (value === null) return this.removeAttribute(attributeName);
     else {
       return typeof value === "string"
@@ -120,8 +117,8 @@ export class Shadow extends HTMLElement {
   /**
    * Call this method in 'connectedCallback' if you want to avoid using the
    * 'property' decorator. It assigns the accessors to the element's properties
-   * and starts rendering. The arguments are explained next to the `property`
-   * decorator.
+   * and starts rendering. The arguments are explained next to the decorator
+   * `property`.
    */
   init(propertiesAndOptions: PropertyAndOptions[]): void {
     propertiesAndOptions.forEach((
@@ -134,40 +131,36 @@ export class Shadow extends HTMLElement {
       }: PropertyAndOptions,
     ) => {
       if (wait && !this._connected) {
-        this.waitingList.add(property);
+        this._waitingList.add(property);
       } else if (assert && !(this as any)[property]) {
         throw new ShadowError(
-          `The property '${property}' must have a truthy value.`,
+          `The property ${property} must have a truthy value.`,
         );
       }
 
-      if (this.presetProperties.has(property)) {
-        this.accessorsStore.set(property, this.presetProperties.get(property));
-      } else {
-        this.accessorsStore.set(property, (this as any)[property]);
-      }
+      this._accessorsStore.set(property, (this as any)[property]);
 
       if (reflect && isNull(this.getAttribute(property))) {
-        this.updateAttribute(
+        this._updateAttribute(
           convertCamelToDash(property),
           (this as any)[property],
         );
       }
 
       Object.defineProperty(this, property, {
-        get: () => this.accessorsStore.get(property),
+        get: () => this._accessorsStore.get(property),
         set: (value: unknown) => {
+          if (assert && !value) {
+            throw new ShadowError(
+              `The property '${property}' must have a truthy value.`,
+            );
+          }
           const attributeName = convertCamelToDash(property);
           const attributeValue = this.getAttribute(attributeName);
-          this.accessorsStore.set(property, value);
+          this._accessorsStore.set(property, value);
           if (wait) {
-            this.waitingList.delete(property);
-            if (assert && !(this as any)[property]) {
-              throw new ShadowError(
-                `The property '${property}' must have a truthy value.`,
-              );
-            }
-            if (this.waitingList.size === 0) {
+            this._waitingList.delete(property);
+            if (this._waitingList.size === 0) {
               if (!this._connected) this._connected = true;
             }
           }
@@ -176,24 +169,25 @@ export class Shadow extends HTMLElement {
             attributeValue !== value &&
             attributeValue !== JSON.stringify(value)
           ) {
-            this.updateAttribute(attributeName, value);
+            this._updateAttribute(attributeName, value);
           }
           if (this._connected && render) {
-            this.actuallyRender();
+            this._actuallyRender();
           }
         },
       });
     });
-    if (this.waitingList.size === 0) {
+
+    if (this._waitingList.size === 0) {
       if (!this._connected) this._connected = true;
-      this.actuallyRender();
+      this._actuallyRender();
     }
   }
 
   /**
    * Compares and reflects properties to attributes.
    */
-  update(name: string, newValue: Attribute): void {
+  private _update(name: string, newValue: Attribute): void {
     const property = convertDashToCamel(name);
     if (property in this) {
       if (
@@ -221,11 +215,11 @@ export class Shadow extends HTMLElement {
    * after the first render.
    */
   addCss(ruleSet: string, render = false) {
-    this.dynamicCssStore.push(createTemplate(`<style>${ruleSet}</style>`));
-    if (render && this._connected) this.actuallyRender();
+    this._dynamicCssStore.push(createTemplate(`<style>${ruleSet}</style>`));
+    if (render && this._connected) this._actuallyRender();
   }
 
-  private createFragment(...input: AllowedExpressions[]): DocumentFragment {
+  private _createFragment(...input: AllowedExpressions[]): DocumentFragment {
     const documentFragment = document.createDocumentFragment();
     input.flat(2).forEach((data) => {
       if (isHReturn(data)) {
@@ -256,28 +250,28 @@ export class Shadow extends HTMLElement {
    * Calls the function `this.render()`, processes the return value and dispatches
    * the event `_update`.
    */
-  private actuallyRender(): void {
-    if (this.renderingCount > 0) this.dom = { id: {}, class: {} };
-    const documentFragment = this.createFragment(this.render!());
+  private _actuallyRender(): void {
+    if (this._renderingCount > 0) this.dom = { id: {}, class: {} };
+    const documentFragment = this._createFragment(this.render!());
     while (this.root.firstChild) {
       this.root.removeChild(this.root.firstChild);
     }
     (this.constructor as typeof Shadow).styles.forEach((template) =>
       this.root.append(template.content.cloneNode(true))
     );
-    if (this.dynamicCssStore.length > 0) {
-      this.dynamicCssStore.forEach((styleTemplate) =>
+    if (this._dynamicCssStore.length > 0) {
+      this._dynamicCssStore.forEach((styleTemplate) =>
         this.root.append(styleTemplate.content.cloneNode(true))
       );
     }
     this.root.prepend(documentFragment);
     this.dispatchEvent(this._updateCustomEvent);
-    this.renderingCount++;
-    // console.log((this.constructor as typeof Shadow).is, this.renderingCount);
+    this._renderingCount++;
+    // console.log((this.constructor as typeof Shadow).is, this._renderingCount);
   }
 
   /**
-   * Is called by the method `actuallyRender` which renders the custom element.
+   * Is called by the method `_actuallyRender` which renders the custom element.
    * It must return the return type of the function `html` which is
    * `AllowedExpressions`.
    */
@@ -287,13 +281,13 @@ export class Shadow extends HTMLElement {
    * A modifiable lifecycle callback which is called after the first update which
    * includes rendering.
    */
-  firstUpdated?(event: Event): void;
+  firstUpdated?(event: CustomEvent): void;
 
   /**
    * A modifiable lifecycle callback which is called after each update which
    * includes rendering.
    */
-  updated?(event: Event): void;
+  updated?(event: CustomEvent): void;
 
   /**
    * The return type of the function `css`, which is an array of HTMLTemplateElements
@@ -302,7 +296,7 @@ export class Shadow extends HTMLElement {
   static styles: HTMLTemplateElement[] = [];
 
   /**
-   * The decorator `customElement` - if used - sets this static property to the
+   * The decorator `customElement` sets this static property to the
    * custom element's tag name automatically.
    */
   static is?: string;
