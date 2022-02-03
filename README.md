@@ -6,19 +6,19 @@ Do it all with `deno bundle`: No transpiler or other tools are required.
 
 ## Quick Start
 
-Compile `example/my_example.ts`:
+#### Compile `example/my_example.ts`
 
 ```bash
 deno bundle --config example/tsconfig.json example/my_example.ts > example/my_example.js
 ```
 
-Serve the `index.html` file:
+#### Serve `index.html`
 
 ```bash
 deno run --allow-net --allow-read https://deno.land/std/http/file_server.ts example/
 ```
 
-Print the documented API:
+#### Print the documented API
 
 ```bash
 deno doc https://deno.land/x/shadow/mod.ts
