@@ -50,7 +50,7 @@ export class Shadow extends HTMLElement {
    * This boolean will be `true` when `connectedCallback` has been called and all
    * explicitly awaited properties have been set (i.e. the `_waitingList` is empty).
    */
-  _connected: boolean = false;
+  private _connected: boolean = false;
   root: ShadowRoot;
   /**
    * In `this.dom` are the child elements stored which match the id and class
