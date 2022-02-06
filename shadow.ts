@@ -66,9 +66,9 @@ export class Shadow extends HTMLElement {
    * The constructor of `Shadow` takes the optional object `ShadowRootInit` which
    * will be passed to the native method `attachShadow`.
    */
-  constructor(init: ShadowRootInit = { mode: "open" }) {
+  constructor(options: ShadowRootInit = { mode: "open" }) {
     super();
-    this.root = this.attachShadow(init);
+    this.root = this.attachShadow(options);
     // NOTE: `__propertiesAndOptions` is defined by the `property` decorator.
     this._propertiesAndOptions = (this as any).__propertiesAndOptions || [];
     if (this.firstUpdated) {
@@ -90,11 +90,80 @@ export class Shadow extends HTMLElement {
    */
   connectedCallback() {
     this.init(this._propertiesAndOptions);
-    this.init([{ property: "initUrl", render: false }]);
+  }
+
+  /**
+   * Call this method inside of 'connectedCallback' if you want to avoid using
+   * the decorator `property`. The property options are explained next to the
+   * decorator `property`.
+   */
+  private init(propertiesAndOptions: PropertyAndOptions[]) {
+    [...propertiesAndOptions, { property: "initUrl", render: false }]
+      .forEach((propertyAndOptions) =>
+        this._makePropertyAccessible(propertyAndOptions)
+      );
     if (this._waitingList.size === 0) {
       if (!this._connected) this._connected = true;
       this._actuallyRender();
     }
+  }
+
+  /**
+   * It assigns the accessors to the element's property and starts rendering.
+   */
+  private _makePropertyAccessible({
+    property,
+    reflect = true,
+    render = true,
+    wait = false,
+    assert = false,
+  }: PropertyAndOptions): void {
+    if (wait && !this._connected) {
+      this._waitingList.add(property);
+    } else if (assert && !(this as any)[property]) {
+      throw new ShadowError(
+        `The property ${property} must have a truthy value.`,
+      );
+    }
+
+    this._accessorsStore.set(property, (this as any)[property]);
+
+    if (reflect && isNull(this.getAttribute(property))) {
+      this._updateAttribute(
+        convertCamelToDash(property),
+        (this as any)[property],
+      );
+    }
+
+    Object.defineProperty(this, property, {
+      get: () => this._accessorsStore.get(property),
+      set: (value: unknown) => {
+        if (assert && !value) {
+          throw new ShadowError(
+            `The property '${property}' must have a truthy value.`,
+          );
+        }
+        const attributeName = convertCamelToDash(property);
+        const attributeValue = this.getAttribute(attributeName);
+        this._accessorsStore.set(property, value);
+        if (wait) {
+          this._waitingList.delete(property);
+          if (this._waitingList.size === 0) {
+            if (!this._connected) this._connected = true;
+          }
+        }
+        if (
+          reflect &&
+          attributeValue !== value &&
+          attributeValue !== JSON.stringify(value)
+        ) {
+          this._updateAttribute(attributeName, value);
+        }
+        if (this._connected && render) {
+          this._actuallyRender();
+        }
+      },
+    });
   }
 
   /**
@@ -146,71 +215,6 @@ export class Shadow extends HTMLElement {
         ? this.setAttribute(attributeName, value)
         : this.setAttribute(attributeName, JSON.stringify(value));
     }
-  }
-
-  /**
-   * Call this method in 'connectedCallback' if you want to avoid using the
-   * 'property' decorator. It assigns the accessors to the element's properties
-   * and starts rendering. The arguments are explained next to the decorator
-   * `property`.
-   */
-  init(propertiesAndOptions: PropertyAndOptions[]): void {
-    propertiesAndOptions.forEach((
-      {
-        property,
-        reflect = true,
-        render = true,
-        wait = false,
-        assert = false,
-      }: PropertyAndOptions,
-    ) => {
-      if (wait && !this._connected) {
-        this._waitingList.add(property);
-      } else if (assert && !(this as any)[property]) {
-        throw new ShadowError(
-          `The property ${property} must have a truthy value.`,
-        );
-      }
-
-      this._accessorsStore.set(property, (this as any)[property]);
-
-      if (reflect && isNull(this.getAttribute(property))) {
-        this._updateAttribute(
-          convertCamelToDash(property),
-          (this as any)[property],
-        );
-      }
-
-      Object.defineProperty(this, property, {
-        get: () => this._accessorsStore.get(property),
-        set: (value: unknown) => {
-          if (assert && !value) {
-            throw new ShadowError(
-              `The property '${property}' must have a truthy value.`,
-            );
-          }
-          const attributeName = convertCamelToDash(property);
-          const attributeValue = this.getAttribute(attributeName);
-          this._accessorsStore.set(property, value);
-          if (wait) {
-            this._waitingList.delete(property);
-            if (this._waitingList.size === 0) {
-              if (!this._connected) this._connected = true;
-            }
-          }
-          if (
-            reflect &&
-            attributeValue !== value &&
-            attributeValue !== JSON.stringify(value)
-          ) {
-            this._updateAttribute(attributeName, value);
-          }
-          if (this._connected && render) {
-            this._actuallyRender();
-          }
-        },
-      });
-    });
   }
 
   /**
