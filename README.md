@@ -34,7 +34,7 @@ import {
   html,
   property,
   Shadow,
-} from "https://deno.land/x/shadow/mod.ts";
+} from "../mod.ts";
 
 @customElement("my-example")
 export class MyExample extends Shadow {
@@ -98,5 +98,7 @@ export class MyExample extends Shadow {
   clickHandler(e: MouseEvent) {
     return this.h1Content++;
   }
+
+  static observedAttributes = ["init-url"];
 }
 ```
