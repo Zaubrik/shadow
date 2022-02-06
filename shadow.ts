@@ -97,11 +97,9 @@ export class Shadow extends HTMLElement {
    * the decorator `property`. The property options are explained next to the
    * decorator `property`.
    */
-  private init(propertiesAndOptions: PropertyAndOptions[]) {
-    [...propertiesAndOptions, { property: "initUrl", render: false }]
-      .forEach((propertyAndOptions) =>
-        this._makePropertyAccessible(propertyAndOptions)
-      );
+  init(propertiesAndOptions: PropertyAndOptions[]) {
+    propertiesAndOptions.push({ property: "initUrl", render: false });
+    propertiesAndOptions.forEach(this._makePropertyAccessible);
     if (this._waitingList.size === 0) {
       if (!this._connected) this._connected = true;
       this._actuallyRender();
@@ -111,13 +109,13 @@ export class Shadow extends HTMLElement {
   /**
    * It assigns the accessors to the element's property and starts rendering.
    */
-  private _makePropertyAccessible({
+  private _makePropertyAccessible = ({
     property,
     reflect = true,
     render = true,
     wait = false,
     assert = false,
-  }: PropertyAndOptions): void {
+  }: PropertyAndOptions): void => {
     if (wait && !this._connected) {
       this._waitingList.add(property);
     } else if (assert && !(this as any)[property]) {
@@ -164,12 +162,12 @@ export class Shadow extends HTMLElement {
         }
       },
     });
-  }
+  };
 
   /**
    * A native custom elements' lifecycle callback. Here, it manages the reflecting
    * of properties to attributes. It also fetches JSON objects and assigns its
-   * properties to the custom element if the attribute `init-url` has been set with
+   * properties to the custom element if the attribute `init-url` has been set to
    * a url or path.
    */
   attributeChangedCallback(
@@ -180,7 +178,7 @@ export class Shadow extends HTMLElement {
     if (newValue === oldValue) {
       return undefined;
     } else if (name === "init-url" && newValue) {
-      this._update(name, newValue);
+      this.update(name, newValue);
       return fetch(
         new URL(newValue, location.href).href,
         { headers: { "content-type": "application/json" } },
@@ -201,7 +199,7 @@ export class Shadow extends HTMLElement {
           throw new ShadowError(err.message);
         });
     } else {
-      return this._update(name, newValue);
+      return this.update(name, newValue);
     }
   }
 
@@ -220,7 +218,7 @@ export class Shadow extends HTMLElement {
   /**
    * Compares and reflects properties to attributes.
    */
-  private _update(name: string, newValue: Attribute): void {
+  update(name: string, newValue: Attribute): void {
     const property = convertDashToCamel(name);
     if (property in this) {
       if (
@@ -237,7 +235,7 @@ export class Shadow extends HTMLElement {
       }
     } else {
       throw new ShadowError(
-        `The property '${property}' doen't exist on '${this.constructor.name}'.`,
+        `The property '${property}' doesn't exist on '${this.constructor.name}'.`,
       );
     }
   }
@@ -288,7 +286,6 @@ export class Shadow extends HTMLElement {
       this.dom.id = {};
       this.dom.class = {};
     }
-    const documentFragment = this._createFragment(this.render!());
     while (this.root.firstChild) {
       this.root.removeChild(this.root.firstChild);
     }
@@ -300,7 +297,7 @@ export class Shadow extends HTMLElement {
         this.root.append(styleTemplate.content.cloneNode(true))
       );
     }
-    this.root.prepend(documentFragment);
+    this.root.prepend(this._createFragment(this.render()));
     this.dispatchEvent(this._updateCustomEvent);
     this._renderingCount++;
     // console.log((this.constructor as typeof Shadow).is, this._renderingCount);
@@ -311,7 +308,9 @@ export class Shadow extends HTMLElement {
    * It must return the return type of the function `html` which is
    * `AllowedExpressions`.
    */
-  render?(): AllowedExpressions;
+  render(): AllowedExpressions {
+    return "";
+  }
 
   /**
    * A modifiable lifecycle callback which is called after the first update which
@@ -326,8 +325,8 @@ export class Shadow extends HTMLElement {
   updated?(event: CustomEvent): void;
 
   /**
-   * The return type of the function `css`, which is an array of HTMLTemplateElements
-   * containing a script element, is assigned to this static property.
+   * The return value of the function `css`, which is an array of HTMLTemplateElements
+   * containing `style` elements, is assigned to this static property.
    */
   static styles: HTMLTemplateElement[] = [];
 

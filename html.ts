@@ -110,12 +110,11 @@ export function h(
  * the hood which uses standard JavaScript Tagged Templates and works in all modern
  * browsers. The function `html` takes a _tagged template_ and processes the
  * `AllowedExpressions` where `false`, `null` and `undefined` are converted to an
- * empty string and the `numbers` are _stringified_.
- * The elements matching the id and class selectors marked with an `@` sign will
- * later be added to the `this.dom` object.
- * We add the `EventListeners` with `addEventListener(event, listener.bind(this))`
- * so that you don't need to use arrow functions anymore.
- * It parses SVG elements as well.
+ * empty string and `number`s are _stringified_.
+ * The children matching the id and class selectors marked with an `@` sign will
+ * be added to the object `this.dom` later.
+ * It adds `EventListeners` with `addEventListener(event, listener.bind(this))`,
+ * so you don't need to use arrow functions anymore.
  */
 export const html: (
   strings: TemplateStringsArray,

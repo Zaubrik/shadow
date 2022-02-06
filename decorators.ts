@@ -27,13 +27,9 @@ export function customElement(
  * The decorator `property` takes an optional object as argument with four
  * optional properties:
  * 1. Setting `reflect` to `false` would stop the element's attribute from synchronising.
- * 2. If you don't want the changing of the property to cause a rerendering, then
- *    set `render` to `false`.
- * 3. If you use properties instead of attributes as data input, setting `wait`
- * to `true` reduces the amount of renderings because it waits for the property's
- * assignment (practically, you can just ignore it).
- * 4. The boolean `assert` checks if the input has a *truthy* value. Otherwise it
- * throws an `ShadowError`.
+ * 2. Stop rerendering on property change by setting `render` to `false`.
+ * 3. Wait for property assignment before rendering with the option `wait`.
+ * 4. Check with `assert` if the input has a *truthy* value. Otherwise throw error.
  * It also adds an array containing the names of the attributes you want to observe
  * with the [lifecycle callback](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements)
  * `attributeChangedCallback`.
