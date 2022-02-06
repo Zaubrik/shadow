@@ -48,7 +48,9 @@ export function property({
   name: string,
 ) => void {
   return (protoOrDescriptor: HTMLElement, name: string) => {
-    if (!(protoOrDescriptor.constructor as any).observedAttributes) {
+    if (
+      (protoOrDescriptor.constructor as any).observedAttributes === undefined
+    ) {
       (protoOrDescriptor.constructor as any).observedAttributes = [];
     }
     if (reflect === true) {

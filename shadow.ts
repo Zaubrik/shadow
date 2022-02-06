@@ -38,7 +38,7 @@ export class Shadow extends HTMLElement {
   private _waitingList = new Set<string>();
   private _accessorsStore = new Map<string, unknown>();
   private _propertiesAndOptions: PropertyAndOptions[];
-  private _updateCustomEvent = new CustomEvent("_update");
+  private _updateCustomEvent = new CustomEvent("_updated");
   /**
    * Stores the CSS which has been added by the function `addCss`.
    */
@@ -68,13 +68,13 @@ export class Shadow extends HTMLElement {
     this._propertiesAndOptions = (this as any).__propertiesAndOptions || [];
     if (this.firstUpdated) {
       this.addEventListener(
-        "_update",
+        "_updated",
         (event: any) => this.firstUpdated!(event),
         { once: true },
       );
     }
     if (this.updated) {
-      this.addEventListener("_update", (event: any) => this.updated!(event));
+      this.addEventListener("_updated", (event: any) => this.updated!(event));
     }
   }
 
@@ -260,7 +260,7 @@ export class Shadow extends HTMLElement {
 
   /**
    * Calls the function `this.render()`, processes the return value and dispatches
-   * the event `_update`.
+   * the event `_updated`.
    */
   private _actuallyRender(): void {
     if (this._renderingCount > 0) {
