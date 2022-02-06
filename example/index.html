@@ -7,13 +7,15 @@
     <script src="./my_example.js" type="module"></script>
   </head>
   <body>
-    <my-example first-content="... attributes or ..."></my-example>
+    <my-example
+      init-url="/data.json"
+      first-content="... attributes or ..."
+    ></my-example>
     <script type="module">
       const example = document.querySelector("my-example")
       example.addCss(`#myButton{background:green;}`)
       example.secondContent = "properties."
       example.anchorAttributes = { href: "/", target: "_blank" }
-      example.items = ["one", "two", "three"]
     </script>
   </body>
 </html>

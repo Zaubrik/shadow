@@ -66,12 +66,6 @@ export class Shadow extends HTMLElement {
     this.root = this.attachShadow(init);
     // NOTE: `__propertiesAndOptions` is defined by the `property` decorator.
     this._propertiesAndOptions = (this as any).__propertiesAndOptions || [];
-    // When properties are assigned before the custom element has been defined,
-    // the values are already stored in `_accessorsStore`.
-    this._propertiesAndOptions.forEach(({ property }) => {
-      (this as any)[property] !== undefined &&
-        this._accessorsStore.set(property, (this as any)[property]);
-    });
     if (this.firstUpdated) {
       this.addEventListener(
         "_update",
@@ -95,15 +89,29 @@ export class Shadow extends HTMLElement {
 
   /**
    * A native custom elements' lifecycle callback. Here, it manages the reflecting
-   * of properties to attributes.
+   * of properties to attributes. It also fetches JSON objects and assigns its
+   * properties to the custom element if the attribute `init-url` has been set with
+   * a url or path.
    */
   attributeChangedCallback(
     name: string,
     oldValue: Attribute,
     newValue: Attribute,
   ) {
-    if (newValue === oldValue) return;
-    else return this._update(name, newValue);
+    if (newValue === oldValue) {
+      return undefined;
+    } else if (name === "init-url" && newValue) {
+      return fetch(new URL(newValue, location.origin).href).then((res) =>
+        res.json()
+      )
+        .then((data) =>
+          Object.entries(data).forEach((
+            [property, value],
+          ) => ((this as any)[property] = value))
+        );
+    } else {
+      return this._update(name, newValue);
+    }
   }
 
   /**
@@ -255,7 +263,10 @@ export class Shadow extends HTMLElement {
    * the event `_update`.
    */
   private _actuallyRender(): void {
-    if (this._renderingCount > 0) this.dom = { id: {}, class: {} };
+    if (this._renderingCount > 0) {
+      this.dom.id = {};
+      this.dom.class = {};
+    }
     const documentFragment = this._createFragment(this.render!());
     while (this.root.firstChild) {
       this.root.removeChild(this.root.firstChild);
@@ -271,7 +282,6 @@ export class Shadow extends HTMLElement {
     this.root.prepend(documentFragment);
     this.dispatchEvent(this._updateCustomEvent);
     this._renderingCount++;
-    // console.log((this.constructor as typeof Shadow).is, this._renderingCount);
   }
 
   /**

@@ -34,6 +34,9 @@ export function customElement(
  * assignment (practically, you can just ignore it).
  * 4. The boolean `assert` checks if the input has a *truthy* value. Otherwise it
  * throws an `ShadowError`.
+ * It also adds an array containing the names of the attributes you want to observe
+ * with the [lifecycle callback](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements)
+ * `attributeChangedCallback`.
  */
 export function property({
   reflect = true,
@@ -45,26 +48,14 @@ export function property({
   name: string,
 ) => void {
   return (protoOrDescriptor: HTMLElement, name: string) => {
+    if (!(protoOrDescriptor.constructor as any).observedAttributes) {
+      (protoOrDescriptor.constructor as any).observedAttributes = [];
+    }
     if (reflect === true) {
-      const observedAttributesArray =
-        (protoOrDescriptor.constructor as any).observedAttributes || [];
-      observedAttributesArray.push(
+      (protoOrDescriptor.constructor as any).observedAttributes.push(
         convertCamelToDash(name),
       );
-
-      Object.defineProperty(
-        protoOrDescriptor.constructor as any,
-        "observedAttributes",
-        {
-          enumerable: true,
-          configurable: true,
-          get() {
-            return observedAttributesArray;
-          },
-        },
-      );
     }
-
     if (!(protoOrDescriptor as any).__propertiesAndOptions) {
       Object.defineProperty(
         protoOrDescriptor,
