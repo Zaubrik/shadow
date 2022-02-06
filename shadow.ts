@@ -58,6 +58,11 @@ export class Shadow extends HTMLElement {
    */
   dom: Dom = { id: {}, class: {} };
   /**
+   * When you assign a url or a path to `initUrl` then `Shadow` will fetch JSON
+   * objects and assign its properties to the custom element automatically.
+   */
+  initUrl: Attribute = null;
+  /**
    * The constructor of `Shadow` takes the optional object `ShadowRootInit` which
    * will be passed to the native method `attachShadow`.
    */
@@ -85,6 +90,11 @@ export class Shadow extends HTMLElement {
    */
   connectedCallback() {
     this.init(this._propertiesAndOptions);
+    this.init([{ property: "initUrl", render: false }]);
+    if (this._waitingList.size === 0) {
+      if (!this._connected) this._connected = true;
+      this._actuallyRender();
+    }
   }
 
   /**
@@ -101,14 +111,26 @@ export class Shadow extends HTMLElement {
     if (newValue === oldValue) {
       return undefined;
     } else if (name === "init-url" && newValue) {
-      return fetch(new URL(newValue, location.origin).href).then((res) =>
-        res.json()
-      )
+      this._update(name, newValue);
+      return fetch(
+        new URL(newValue, location.href).href,
+        { headers: { "content-type": "application/json" } },
+      ).then((res) => {
+        if (res.ok) {
+          return res.json();
+        } else {
+          throw new ShadowError(
+            `Received status code ${res.status} instead of 200-299 range`,
+          );
+        }
+      })
         .then((data) =>
           Object.entries(data).forEach((
             [property, value],
           ) => ((this as any)[property] = value))
-        );
+        ).catch((err) => {
+          throw new ShadowError(err.message);
+        });
     } else {
       return this._update(name, newValue);
     }
@@ -189,11 +211,6 @@ export class Shadow extends HTMLElement {
         },
       });
     });
-
-    if (this._waitingList.size === 0) {
-      if (!this._connected) this._connected = true;
-      this._actuallyRender();
-    }
   }
 
   /**
@@ -282,6 +299,7 @@ export class Shadow extends HTMLElement {
     this.root.prepend(documentFragment);
     this.dispatchEvent(this._updateCustomEvent);
     this._renderingCount++;
+    // console.log((this.constructor as typeof Shadow).is, this._renderingCount);
   }
 
   /**

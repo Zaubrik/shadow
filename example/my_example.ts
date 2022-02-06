@@ -11,8 +11,6 @@ import {
 export class MyExample extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
   @property()
-  initUrl: Attribute = null;
-  @property()
   h1Content = 0;
   @property()
   firstContent: Attribute = null;
@@ -71,4 +69,6 @@ export class MyExample extends Shadow {
   clickHandler(e: MouseEvent) {
     return this.h1Content++;
   }
+
+  static observedAttributes = ["init-url"];
 }
