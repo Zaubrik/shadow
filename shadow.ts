@@ -2,7 +2,9 @@ import {
   convertCamelToDash,
   convertDashToCamel,
   createTemplate,
+  isFalse,
   isNull,
+  isTrue,
   stringify,
 } from "./util.ts";
 import { AllowedExpressions, isHReturn } from "./html.ts";
@@ -49,6 +51,10 @@ export class Shadow extends HTMLElement {
    */
   private _connected: boolean = false;
   /**
+   * Don't render until the properties of the fetched JSON object have been assigned.
+   */
+  private _initUrlRenderPause: boolean = false;
+  /**
    * Access the `shadowRoot` through the property `root`.
    */
   root: ShadowRoot;
@@ -72,21 +78,18 @@ export class Shadow extends HTMLElement {
     // NOTE: `__propertiesAndOptions` is defined by the `property` decorator.
     this._propertiesAndOptions = (this as any).__propertiesAndOptions || [];
     if (this.firstUpdated) {
-      this.addEventListener(
-        "_updated",
-        (event: any) => this.firstUpdated!(event),
-        { once: true },
-      );
+      this.addEventListener("_updated", this.firstUpdated as any, {
+        once: true,
+      });
     }
     if (this.updated) {
-      this.addEventListener("_updated", (event: any) => this.updated!(event));
+      this.addEventListener("_updated", this.updated as any);
     }
   }
 
   /**
-   * A native custom elements' [lifecycle callback](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements).
-   * When you use this callback, you probably want to call `super.connectedCallback()`
-   * inside of it.
+   * A native custom elements' lifecycle callback. When you use this callback,
+   * you probably want to call `super.connectedCallback()` inside of it.
    */
   connectedCallback() {
     this.init(this._propertiesAndOptions);
@@ -97,12 +100,14 @@ export class Shadow extends HTMLElement {
    * the decorator `property`. The property options are explained next to the
    * decorator `property`.
    */
-  init(propertiesAndOptions: PropertyAndOptions[]) {
+  init(propertiesAndOptions: PropertyAndOptions[]): void {
     propertiesAndOptions.push({ property: "initUrl", render: false });
     propertiesAndOptions.forEach(this._makePropertyAccessible);
     if (this._waitingList.size === 0) {
-      if (!this._connected) this._connected = true;
-      this._actuallyRender();
+      if (isFalse(this._connected) && isFalse(this._initUrlRenderPause)) {
+        this._connected = true;
+      }
+      if (isTrue(this._connected)) this._actuallyRender();
     }
   }
 
@@ -116,9 +121,9 @@ export class Shadow extends HTMLElement {
     wait = false,
     assert = false,
   }: PropertyAndOptions): void => {
-    if (wait && !this._connected) {
+    if (isTrue(wait) && isFalse(this._connected)) {
       this._waitingList.add(property);
-    } else if (assert && !(this as any)[property]) {
+    } else if (isTrue(assert) && !(this as any)[property]) {
       throw new ShadowError(
         `The property ${property} must have a truthy value.`,
       );
@@ -126,7 +131,7 @@ export class Shadow extends HTMLElement {
 
     this._accessorsStore.set(property, (this as any)[property]);
 
-    if (reflect && isNull(this.getAttribute(property))) {
+    if (isTrue(reflect) && isNull(this.getAttribute(property))) {
       this._updateAttribute(
         convertCamelToDash(property),
         (this as any)[property],
@@ -136,7 +141,7 @@ export class Shadow extends HTMLElement {
     Object.defineProperty(this, property, {
       get: () => this._accessorsStore.get(property),
       set: (value: unknown) => {
-        if (assert && !value) {
+        if (isTrue(assert) && !value) {
           throw new ShadowError(
             `The property '${property}' must have a truthy value.`,
           );
@@ -144,20 +149,25 @@ export class Shadow extends HTMLElement {
         const attributeName = convertCamelToDash(property);
         const attributeValue = this.getAttribute(attributeName);
         this._accessorsStore.set(property, value);
-        if (wait) {
+        if (isTrue(wait)) {
           this._waitingList.delete(property);
           if (this._waitingList.size === 0) {
-            if (!this._connected) this._connected = true;
+            if (isFalse(this._connected) && isFalse(this._initUrlRenderPause)) {
+              this._connected = true;
+            }
           }
         }
         if (
-          reflect &&
+          isTrue(reflect) &&
           attributeValue !== value &&
           attributeValue !== JSON.stringify(value)
         ) {
           this._updateAttribute(attributeName, value);
         }
-        if (this._connected && render) {
+        if (
+          isTrue(this._connected) && isTrue(render) &&
+          isFalse(this._initUrlRenderPause)
+        ) {
           this._actuallyRender();
         }
       },
@@ -174,40 +184,50 @@ export class Shadow extends HTMLElement {
     name: string,
     oldValue: Attribute,
     newValue: Attribute,
-  ) {
+  ): void {
     if (newValue === oldValue) {
       return undefined;
     } else if (name === "init-url" && newValue) {
+      this._initUrlRenderPause = true;
       this.update(name, newValue);
-      return fetch(
-        new URL(newValue, location.href).href,
-        { headers: { "content-type": "application/json" } },
-      ).then((res) => {
-        if (res.ok) {
-          return res.json();
-        } else {
-          throw new ShadowError(
-            `Received status code ${res.status} instead of 200-299 range`,
-          );
-        }
-      })
-        .then((data) =>
-          Object.entries(data).forEach((
-            [property, value],
-          ) => ((this as any)[property] = value))
-        ).catch((err) => {
-          throw new ShadowError(err.message);
+      this._fetchJsonAndUpdate(newValue)
+        .then(() => {
+          this._initUrlRenderPause = false;
+          this._connected = true;
+          this._actuallyRender();
         });
     } else {
       return this.update(name, newValue);
     }
   }
 
+  private _fetchJsonAndUpdate(urlOrPath: string): Promise<void> {
+    return fetch(
+      new URL(urlOrPath, location.href).href,
+      { headers: { "content-type": "application/json" } },
+    ).then((res) => {
+      if (isTrue(res.ok)) {
+        return res.json().then((data) =>
+          Object.entries(data).forEach(([property, value]) =>
+            (this as any)[property] = value
+          )
+        );
+      } else {
+        throw new ShadowError(
+          `Received status code ${res.status} instead of 200-299 range`,
+        );
+      }
+    })
+      .catch((err) => {
+        throw new ShadowError(err.message);
+      });
+  }
+
   /**
    * Sets or removes attributes.
    */
   private _updateAttribute(attributeName: string, value: unknown): void {
-    if (value === null) return this.removeAttribute(attributeName);
+    if (isNull(value)) return this.removeAttribute(attributeName);
     else {
       return typeof value === "string"
         ? this.setAttribute(attributeName, value)
@@ -245,9 +265,9 @@ export class Shadow extends HTMLElement {
    * you want the element to be rerendered, e.g. when you call this function
    * after the first render.
    */
-  addCss(ruleSet: string, render = false) {
+  addCss(ruleSet: string, render = false): void {
     this._dynamicCssStore.push(createTemplate(`<style>${ruleSet}</style>`));
-    if (render && this._connected) this._actuallyRender();
+    if (isTrue(render) && isTrue(this._connected)) this._actuallyRender();
   }
 
   private _createFragment(...input: AllowedExpressions[]): DocumentFragment {

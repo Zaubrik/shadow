@@ -23,3 +23,11 @@ export function stringify(input: unknown): string {
 export function isNull(input: unknown): input is null {
   return input === null;
 }
+
+export function isTrue(input: unknown): input is true {
+  return input === true;
+}
+
+export function isFalse(input: unknown): input is false {
+  return input === false;
+}

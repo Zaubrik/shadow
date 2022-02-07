@@ -31,8 +31,7 @@ export function customElement(
  * 3. Wait for property assignment before rendering with the option `wait`.
  * 4. Check with `assert` if the input has a *truthy* value. Otherwise throw error.
  * It also adds an array containing the names of the attributes you want to observe
- * with the [lifecycle callback](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements)
- * `attributeChangedCallback`.
+ * with the native lifecycle callback `attributeChangedCallback`.
  */
 export function property({
   reflect = true,
@@ -54,7 +53,7 @@ export function property({
         convertCamelToDash(name),
       );
     }
-    if (!(protoOrDescriptor as any).__propertiesAndOptions) {
+    if ((protoOrDescriptor as any).__propertiesAndOptions === undefined) {
       Object.defineProperty(
         protoOrDescriptor,
         "__propertiesAndOptions",
