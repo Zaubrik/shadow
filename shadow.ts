@@ -10,7 +10,7 @@ import {
 import { AllowedExpressions, isHReturn } from "./html.ts";
 
 /**
- * Represents the type of HTML attributes.
+ * The type for HTML attributes.
  */
 export type Attribute = string | null;
 
@@ -42,7 +42,7 @@ export class Shadow extends HTMLElement {
   private _propertiesAndOptions: PropertyAndOptions[];
   private _updateCustomEvent = new CustomEvent("_updated");
   /**
-   * Stores the CSS which has been added by the function `addCss`.
+   * Stores the CSS which has been added by the method `addCss`.
    */
   private _dynamicCssStore: HTMLTemplateElement[] = [];
   /**
@@ -64,8 +64,8 @@ export class Shadow extends HTMLElement {
    */
   dom: Dom = { id: {}, class: {} };
   /**
-   * When you assign a url or a path to `initUrl` then `Shadow` will fetch JSON
-   * objects and assign its properties to the custom element automatically.
+   * When you assign a url or a path to `initUrl` then `Shadow` will fetch a JSON
+   * object and assign its properties to the custom element automatically.
    */
   initUrl: Attribute = null;
   /**
@@ -224,7 +224,7 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * Sets or removes attributes.
+   * Sets and removes attributes.
    */
   private _updateAttribute(attributeName: string, value: unknown): void {
     if (isNull(value)) return this.removeAttribute(attributeName);
@@ -261,9 +261,8 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * Adds CSS to the shadowRoot dynamically. Pass `true` as second argument if
-   * you want the element to be rerendered, e.g. when you call this function
-   * after the first render.
+   * Adds CSS to the `shadowRoot` dynamically. Pass `true` as second argument if
+   * you want the custom element to be rerendered.
    */
   addCss(ruleSet: string, render = false): void {
     this._dynamicCssStore.push(createTemplate(`<style>${ruleSet}</style>`));
@@ -298,7 +297,7 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * Calls the function `this.render()`, processes the return value and dispatches
+   * Calls the method `this.render`, processes the return value and dispatches
    * the event `_updated`.
    */
   private _actuallyRender(): void {
