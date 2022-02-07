@@ -202,10 +202,7 @@ export class Shadow extends HTMLElement {
   }
 
   private _fetchJsonAndUpdate(urlOrPath: string): Promise<void> {
-    return fetch(
-      new URL(urlOrPath, location.href).href,
-      { headers: { "content-type": "application/json" } },
-    ).then((res) => {
+    return fetch(new URL(urlOrPath, location.href).href).then((res) => {
       if (isTrue(res.ok)) {
         return res.json().then((data) =>
           Object.entries(data).forEach(([property, value]) =>
