@@ -107,8 +107,8 @@ export class Shadow extends HTMLElement {
     if (this._waitingList.size === 0) {
       if (isFalse(this._connected) && isFalse(this._initUrlRenderPause)) {
         this._connected = true;
+        this._actuallyRender();
       }
-      if (isTrue(this._connected)) this._actuallyRender();
     }
   }
 
