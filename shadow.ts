@@ -4,6 +4,7 @@ import {
   createTemplate,
   isFalse,
   isNull,
+  isString,
   isTrue,
   stringify,
 } from "./util.ts";
@@ -187,7 +188,7 @@ export class Shadow extends HTMLElement {
   ): void {
     if (newValue === oldValue) {
       return undefined;
-    } else if (name === "init-url" && newValue) {
+    } else if (name === "init-url" && isString(newValue)) {
       this._initUrlRenderPause = true;
       this.update(name, newValue);
       this._fetchJsonAndUpdate(newValue)
@@ -211,7 +212,7 @@ export class Shadow extends HTMLElement {
         );
       } else {
         throw new ShadowError(
-          `Received status code ${res.status} instead of 200-299 range`,
+          `Received status code ${res.status} instead of 200-299 range.`,
         );
       }
     })
@@ -226,7 +227,7 @@ export class Shadow extends HTMLElement {
   private _updateAttribute(attributeName: string, value: unknown): void {
     if (isNull(value)) return this.removeAttribute(attributeName);
     else {
-      return typeof value === "string"
+      return isString(value)
         ? this.setAttribute(attributeName, value)
         : this.setAttribute(attributeName, JSON.stringify(value));
     }
@@ -252,7 +253,7 @@ export class Shadow extends HTMLElement {
       }
     } else {
       throw new ShadowError(
-        `The property '${property}' doesn't exist on '${this.constructor.name}'.`,
+        `The property '${property}' does not exist on '${this.constructor.name}'.`,
       );
     }
   }

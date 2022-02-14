@@ -20,6 +20,10 @@ export function stringify(input: unknown): string {
     : "";
 }
 
+export function isString(input: unknown): input is string {
+  return typeof input === "string";
+}
+
 export function isNull(input: unknown): input is null {
   return input === null;
 }
