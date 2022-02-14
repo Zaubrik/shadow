@@ -132,11 +132,8 @@ export class Shadow extends HTMLElement {
 
     this._accessorsStore.set(property, (this as any)[property]);
 
-    if (isTrue(reflect) && isNull(this.getAttribute(property))) {
-      this._updateAttribute(
-        convertCamelToDash(property),
-        (this as any)[property],
-      );
+    if (isTrue(reflect)) {
+      this._updateAttribute(property, (this as any)[property]);
     }
 
     Object.defineProperty(this, property, {
@@ -147,8 +144,6 @@ export class Shadow extends HTMLElement {
             `The property '${property}' must have a truthy value.`,
           );
         }
-        const attributeName = convertCamelToDash(property);
-        const attributeValue = this.getAttribute(attributeName);
         this._accessorsStore.set(property, value);
         if (isTrue(wait)) {
           this._waitingList.delete(property);
@@ -158,12 +153,8 @@ export class Shadow extends HTMLElement {
             }
           }
         }
-        if (
-          isTrue(reflect) &&
-          attributeValue !== value &&
-          attributeValue !== JSON.stringify(value)
-        ) {
-          this._updateAttribute(attributeName, value);
+        if (isTrue(reflect)) {
+          this._updateAttribute(property, value);
         }
         if (
           isTrue(this._connected) && isTrue(render) &&
@@ -174,6 +165,34 @@ export class Shadow extends HTMLElement {
       },
     });
   };
+
+  /**
+   * Sets and removes attributes.
+   */
+  private _updateAttribute(property: string, value: unknown): void {
+    const attributeName = convertCamelToDash(property);
+    const attributeValue = this.getAttribute(attributeName);
+    if (attributeValue !== value) {
+      if (isNull(value)) return this.removeAttribute(attributeName);
+      else {
+        if (isString(value)) {
+          this.setAttribute(attributeName, value);
+        } else {
+          // NOTE: TypeScript uses incorrect return type for `JSON.stringify`.
+          const jsonValue = JSON.stringify(value);
+          if (jsonValue === undefined) {
+            throw new ShadowError(
+              `Only JSON values can be reflected in attributes but received ` +
+                `the value '${value}' for '${property}'.`,
+            );
+          }
+          if (attributeValue !== jsonValue) {
+            this.setAttribute(attributeName, jsonValue);
+          }
+        }
+      }
+    }
+  }
 
   /**
    * A native custom elements' lifecycle callback. Here, it manages the reflecting
@@ -219,18 +238,6 @@ export class Shadow extends HTMLElement {
       .catch((err) => {
         throw new ShadowError(err.message);
       });
-  }
-
-  /**
-   * Sets and removes attributes.
-   */
-  private _updateAttribute(attributeName: string, value: unknown): void {
-    if (isNull(value)) return this.removeAttribute(attributeName);
-    else {
-      return isString(value)
-        ? this.setAttribute(attributeName, value)
-        : this.setAttribute(attributeName, JSON.stringify(value));
-    }
   }
 
   /**
