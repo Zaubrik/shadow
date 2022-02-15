@@ -50,11 +50,11 @@ export class Shadow extends HTMLElement {
    * This boolean will be `true` when `connectedCallback` has been called and all
    * explicitly awaited properties have been set (i.e. the `_waitingList` is empty).
    */
-  private _connected: boolean = false;
+  private _isConnected: boolean = false;
   /**
    * Don't render until the properties of the fetched JSON object have been assigned.
    */
-  private _initUrlRenderPause: boolean = false;
+  private _isPaused: boolean = false;
   /**
    * Access the `shadowRoot` through the property `root`.
    */
@@ -70,13 +70,26 @@ export class Shadow extends HTMLElement {
    */
   initUrl: Attribute = null;
   /**
+   * Gets a boolean indicating if the waiting list is empty or not.
+   */
+  private get _isWaiting(): boolean {
+    return this._waitingList.size !== 0;
+  }
+  /**
+   * Indicates if the custom element is ready for the first render.
+   */
+  private get _isReady(): boolean {
+    return isTrue(this._isConnected) && isFalse(this._isWaiting) &&
+      isFalse(this._isPaused);
+  }
+  /**
    * The constructor of `Shadow` takes the optional object `ShadowRootInit` which
    * will be passed to the native method `attachShadow`.
    */
   constructor(options: ShadowRootInit = { mode: "open" }) {
     super();
     this.root = this.attachShadow(options);
-    // NOTE: `__propertiesAndOptions` is defined by the `property` decorator.
+    // NOTE: `__propertiesAndOptions` is defined by the decorator `property`.
     this._propertiesAndOptions = (this as any).__propertiesAndOptions || [];
     if (this.firstUpdated) {
       this.addEventListener("_updated", this.firstUpdated as any, {
@@ -95,7 +108,6 @@ export class Shadow extends HTMLElement {
   connectedCallback() {
     this.init(this._propertiesAndOptions);
   }
-
   /**
    * Call this method inside of 'connectedCallback' if you want to avoid using
    * the decorator `property`. The property options are explained next to the
@@ -104,11 +116,9 @@ export class Shadow extends HTMLElement {
   init(propertiesAndOptions: PropertyAndOptions[]): void {
     propertiesAndOptions.push({ property: "initUrl", render: false });
     propertiesAndOptions.forEach(this._makePropertyAccessible);
-    if (this._waitingList.size === 0) {
-      if (isFalse(this._connected) && isFalse(this._initUrlRenderPause)) {
-        this._connected = true;
-        this._actuallyRender();
-      }
+    this._isConnected = true;
+    if (isTrue(this._isReady)) {
+      this._actuallyRender();
     }
   }
 
@@ -122,7 +132,7 @@ export class Shadow extends HTMLElement {
     wait = false,
     assert = false,
   }: PropertyAndOptions): void => {
-    if (isTrue(wait) && isFalse(this._connected)) {
+    if (isTrue(wait)) {
       this._waitingList.add(property);
     } else if (isTrue(assert) && !(this as any)[property]) {
       throw new ShadowError(
@@ -145,20 +155,14 @@ export class Shadow extends HTMLElement {
           );
         }
         this._accessorsStore.set(property, value);
-        if (isTrue(wait)) {
+        if (isTrue(wait) && this._waitingList.has(property)) {
           this._waitingList.delete(property);
-          if (this._waitingList.size === 0) {
-            if (isFalse(this._connected) && isFalse(this._initUrlRenderPause)) {
-              this._connected = true;
-            }
-          }
         }
         if (isTrue(reflect)) {
           this._updateAttribute(property, value);
         }
         if (
-          isTrue(this._connected) && isTrue(render) &&
-          isFalse(this._initUrlRenderPause)
+          isTrue(render) && isTrue(this._isReady)
         ) {
           this._actuallyRender();
         }
@@ -208,13 +212,14 @@ export class Shadow extends HTMLElement {
     if (newValue === oldValue) {
       return undefined;
     } else if (name === "init-url" && isString(newValue)) {
-      this._initUrlRenderPause = true;
+      this._isPaused = true;
       this.update(name, newValue);
       this._fetchJsonAndUpdate(newValue)
         .then(() => {
-          this._initUrlRenderPause = false;
-          this._connected = true;
-          this._actuallyRender();
+          this._isPaused = false;
+          if (isTrue(this._isReady)) {
+            this._actuallyRender();
+          }
         });
     } else {
       return this.update(name, newValue);
@@ -271,7 +276,7 @@ export class Shadow extends HTMLElement {
    */
   addCss(ruleSet: string, render = false): void {
     this._dynamicCssStore.push(createTemplate(`<style>${ruleSet}</style>`));
-    if (isTrue(render) && isTrue(this._connected)) this._actuallyRender();
+    if (isTrue(render) && isTrue(this._isReady)) this._actuallyRender();
   }
 
   private _createFragment(...input: AllowedExpressions[]): DocumentFragment {
