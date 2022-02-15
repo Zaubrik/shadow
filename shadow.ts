@@ -70,17 +70,11 @@ export class Shadow extends HTMLElement {
    */
   initUrl: Attribute = null;
   /**
-   * Gets a boolean indicating if the waiting list is empty or not.
-   */
-  private get _isWaiting(): boolean {
-    return this._waitingList.size !== 0;
-  }
-  /**
    * Indicates if the custom element is ready for the first rendering.
    */
   private get _isReady(): boolean {
-    return isTrue(this._isConnected) && isFalse(this._isWaiting) &&
-      isFalse(this._isPaused);
+    return this._isConnected === true && this._isPaused === false &&
+      this._waitingList.size === 0;
   }
   /**
    * The constructor of `Shadow` takes the optional object `ShadowRootInit` which
@@ -155,7 +149,7 @@ export class Shadow extends HTMLElement {
           );
         }
         this._accessorsStore.set(property, value);
-        if (isTrue(wait) && this._waitingList.has(property)) {
+        if (isTrue(wait)) {
           this._waitingList.delete(property);
         }
         if (isTrue(reflect)) {
