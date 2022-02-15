@@ -76,7 +76,7 @@ export class Shadow extends HTMLElement {
     return this._waitingList.size !== 0;
   }
   /**
-   * Indicates if the custom element is ready for the first render.
+   * Indicates if the custom element is ready for the first rendering.
    */
   private get _isReady(): boolean {
     return isTrue(this._isConnected) && isFalse(this._isWaiting) &&
