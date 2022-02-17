@@ -47,12 +47,13 @@ export class Shadow extends HTMLElement {
    */
   private _dynamicCssStore: HTMLTemplateElement[] = [];
   /**
-   * This boolean will be `true` when `connectedCallback` has been called and all
-   * explicitly awaited properties have been set (i.e. the `_waitingList` is empty).
+   * This boolean will be `true` when the native method `connectedCallback` has
+   * been called and the properties have been *made accessible*.
    */
   private _isConnected: boolean = false;
   /**
-   * Don't render until the properties of the fetched JSON object have been assigned.
+   * The initial rendering is delayed until the properties of the fetched JSON
+   * object have been assigned to the custom element's properties.
    */
   private _isPaused: boolean = false;
   /**
@@ -155,9 +156,7 @@ export class Shadow extends HTMLElement {
         if (isTrue(reflect)) {
           this._updateAttribute(property, value);
         }
-        if (
-          isTrue(render) && isTrue(this._isReady)
-        ) {
+        if (isTrue(render) && isTrue(this._isReady)) {
           this._actuallyRender();
         }
       },
@@ -176,7 +175,7 @@ export class Shadow extends HTMLElement {
         if (isString(value)) {
           this.setAttribute(attributeName, value);
         } else {
-          // NOTE: TypeScript uses incorrect return type for `JSON.stringify`.
+          // NOTE: TypeScript uses an incorrect return type for `JSON.stringify`.
           const jsonValue = JSON.stringify(value);
           if (jsonValue === undefined) {
             throw new ShadowError(
@@ -242,19 +241,17 @@ export class Shadow extends HTMLElement {
   /**
    * Compares and reflects properties to attributes.
    */
-  update(name: string, newValue: Attribute): void {
+  update(name: string, value: Attribute): void {
     const property = convertDashToCamel(name);
     if (property in this) {
       if (
-        (this as any)[property] !== newValue &&
-        JSON.stringify((this as any)[property]) !== newValue
+        (this as any)[property] !== value &&
+        JSON.stringify((this as any)[property]) !== value
       ) {
         try {
-          (this as any)[property] = isNull(newValue)
-            ? newValue
-            : JSON.parse(newValue);
+          (this as any)[property] = isNull(value) ? value : JSON.parse(value);
         } catch {
-          (this as any)[property] = newValue;
+          (this as any)[property] = value;
         }
       }
     } else {
@@ -348,8 +345,8 @@ export class Shadow extends HTMLElement {
   updated?(event: CustomEvent): void;
 
   /**
-   * The return value of the function `css`, which is an array of HTMLTemplateElements
-   * containing `style` elements, is assigned to this static property.
+   * Contains the return value of the function `css`, which is an array of
+   * HTMLTemplateElements containing `style` elements.
    */
   static styles: HTMLTemplateElement[] = [];
 
