@@ -6,10 +6,10 @@ Do it all with `deno bundle`: No transpiler or other tools are required.
 
 ## Quick Start
 
-#### Compile `example/my_example.ts`
+#### Compile `example/my_element.ts`
 
 ```bash
-deno bundle --config example/tsconfig.json example/my_example.ts > example/my_example.js
+deno bundle --config example/tsconfig.json example/my_element.ts > example/my_element.js
 ```
 
 #### Serve `index.html`
@@ -36,8 +36,8 @@ import {
   Shadow,
 } from "https://deno.land/x/shadow/mod.ts";
 
-@customElement("my-example")
-export class MyExample extends Shadow {
+@customElement("my-element")
+export class MyElement extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
   @property()
   h1Content = 0;

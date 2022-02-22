@@ -7,8 +7,8 @@ import {
   Shadow,
 } from "../mod.ts";
 
-@customElement("my-example")
-export class MyExample extends Shadow {
+@customElement("my-element")
+export class MyElement extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
   @property()
   h1Content = 0;
