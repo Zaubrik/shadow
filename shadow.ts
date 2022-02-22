@@ -4,11 +4,13 @@ import {
   createTemplate,
   isFalse,
   isNull,
+  isObject,
   isString,
   isTrue,
   stringify,
 } from "./util.ts";
-import { AllowedExpressions, isHReturn } from "./html.ts";
+
+import type { AllowedExpressions, HReturn } from "./html.ts";
 
 /**
  * The type for HTML attributes.
@@ -270,11 +272,13 @@ export class Shadow extends HTMLElement {
     if (isTrue(render) && isTrue(this._isReady)) this._actuallyRender();
   }
 
-  private _createFragment(...input: AllowedExpressions[]): DocumentFragment {
+  private _createFragment(
+    ...inputArray: AllowedExpressions[]
+  ): DocumentFragment {
     const documentFragment = document.createDocumentFragment();
-    input.flat(2).forEach((data) => {
-      if (isHReturn(data)) {
-        const { element, collection } = data;
+    inputArray.flat(2).forEach((input) => {
+      if (isObject(input) && input.element instanceof Element) {
+        const { element, collection } = input as HReturn;
         documentFragment.appendChild(element);
         collection.forEach(({ target, queries, eventsAndListeners }) => {
           queries.forEach(({ kind, selector }) =>
@@ -288,9 +292,14 @@ export class Shadow extends HTMLElement {
             target.addEventListener(event, listener.bind(this))
           );
         });
+      } else if (isString(input)) {
+        // NOTE: Allows pure HTML strings without the usage of `htm`.
+        documentFragment.appendChild(
+          createTemplate(input).content.cloneNode(true),
+        );
       } else {
         documentFragment.appendChild(
-          document.createTextNode(stringify(data)),
+          document.createTextNode(stringify(input)),
         );
       }
     });

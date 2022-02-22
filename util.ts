@@ -35,3 +35,9 @@ export function isTrue(input: unknown): input is true {
 export function isFalse(input: unknown): input is false {
   return input === false;
 }
+
+export function isObject(obj: unknown): obj is Record<string, unknown> {
+  return (
+    obj !== null && typeof obj === "object" && Array.isArray(obj) === false
+  );
+}

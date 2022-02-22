@@ -1,5 +1,5 @@
 import htm from "./deps.ts";
-import { stringify } from "./util.ts";
+import { isObject, stringify } from "./util.ts";
 
 export type AllowedExpressions =
   | string
@@ -12,6 +12,10 @@ export type AllowedExpressions =
   | Record<string, any>
   | AllowedExpressions[];
 export type EventAndListener = { event: string; listener: EventListener };
+export type HReturn = {
+  element: HTMLElement | SVGElement;
+  collection: Collection;
+};
 type EventListener = (event: any) => any;
 type Query = {
   kind: "id" | "class";
@@ -22,7 +26,6 @@ type Collection = {
   queries: Query[];
   eventsAndListeners: EventAndListener[];
 }[];
-type HReturn = { element: HTMLElement | SVGElement; collection: Collection };
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -35,9 +38,7 @@ function isSpecialKey(input: string): input is "id" | "class" {
 }
 
 export function isHReturn(input: any): input is HReturn {
-  return (typeof input === "object" && input !== null) &&
-    (input.element instanceof HTMLElement ||
-      input.element instanceof SVGElement);
+  return isObject(input) && input.element instanceof Element;
 }
 
 export function h(
