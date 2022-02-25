@@ -13,7 +13,7 @@ import {
 import type { AllowedExpressions, HReturn } from "./html.ts";
 
 /**
- * The type for HTML attributes.
+ * The type of HTML attributes.
  */
 export type Attribute = string | null;
 
@@ -42,8 +42,8 @@ export class Shadow extends HTMLElement {
   private _renderingCount = 0;
   private _waitingList = new Set<string>();
   private _accessorsStore = new Map<string, unknown>();
-  private _propertiesAndOptions: PropertyAndOptions[];
   private _updateCustomEvent = new CustomEvent("_updated");
+  private _propertiesAndOptions: PropertyAndOptions[];
   /**
    * Stores the CSS which has been added by the method `addCss`.
    */
@@ -107,7 +107,7 @@ export class Shadow extends HTMLElement {
   }
   /**
    * Call this method inside of 'connectedCallback' if you want to avoid using
-   * the decorator `property`. The property options are explained next to the
+   * the decorator `property`. The property's options are explained next to the
    * decorator `property`.
    */
   init(propertiesAndOptions: PropertyAndOptions[]): void {
@@ -195,9 +195,9 @@ export class Shadow extends HTMLElement {
 
   /**
    * A native custom elements' lifecycle callback. Here, it manages the reflecting
-   * of properties to attributes. It also fetches JSON objects and assigns its
-   * properties to the custom element if the attribute `init-url` has been set to
-   * a url or path.
+   * of properties to attributes. If the attribute `init-url` has been set to a
+   * url or path it *fetches* a JSON object and assigns its properties to the
+   * custom element.
    */
   attributeChangedCallback(
     name: string,
