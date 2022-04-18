@@ -1,8 +1,8 @@
+// deno-lint-ignore-file no-explicit-any
 import {
   convertCamelToDash,
   convertDashToCamel,
   createTemplate,
-  isFalse,
   isNull,
   isObject,
   isString,
@@ -52,12 +52,12 @@ export class Shadow extends HTMLElement {
    * This boolean will be `true` when the native method `connectedCallback` has
    * been called and the properties have been *made accessible*.
    */
-  private _isConnected: boolean = false;
+  private _isConnected = false;
   /**
    * The initial rendering is delayed until the properties of the fetched JSON
    * object have been assigned to the custom element's properties.
    */
-  private _isPaused: boolean = false;
+  private _isPaused = false;
   /**
    * Access the `shadowRoot` through the property `root`.
    */
@@ -321,12 +321,13 @@ export class Shadow extends HTMLElement {
     (this.constructor as typeof Shadow).styles.forEach((template) =>
       this.root.append(template.content.cloneNode(true))
     );
+    const fragment = this._createFragment(this.render());
     if (this._dynamicCssStore.length > 0) {
       this._dynamicCssStore.forEach((styleTemplate) =>
         this.root.append(styleTemplate.content.cloneNode(true))
       );
     }
-    this.root.prepend(this._createFragment(this.render()));
+    this.root.prepend(fragment);
     this.dispatchEvent(this._updateCustomEvent);
     this._renderingCount++;
     // console.log((this.constructor as typeof Shadow).is, this._renderingCount);
