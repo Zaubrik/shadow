@@ -9,13 +9,13 @@ Do it all with `deno bundle`: No transpiler or other tools are required.
 #### Compile `example/my_element.ts`
 
 ```bash
-deno bundle --config example/tsconfig.json example/my_element.ts > example/my_element.js
+deno task bundle
 ```
 
 #### Serve `index.html`
 
 ```bash
-deno run --allow-net --allow-read https://deno.land/std/http/file_server.ts example/
+deno task serve
 ```
 
 #### Print the documented API

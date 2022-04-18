@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { convertCamelToDash } from "./util.ts";
 
 import type { PropertyAndOptions } from "./shadow.ts";

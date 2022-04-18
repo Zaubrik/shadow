@@ -1,0 +1,14 @@
+{
+  "tasks": {
+    "serve": "deno run --allow-net --allow-read https://deno.land/std/http/file_server.ts example/",
+    "bundle": "deno bundle example/src/my_element.ts > example/dist/my_element.js"
+  },
+  "compilerOptions": {
+    "removeComments": true,
+    "lib": ["esnext", "es2017", "dom", "dom.iterable", "deno.ns"], // include "deno.ns" for deno namespace
+    "experimentalDecorators": true,
+    "strict": true, /* Enable all strict type-checking options. */
+    "strictPropertyInitialization": false, /* Enable strict checking of property initialization in classes. */
+    "importsNotUsedAsValues": "preserve"
+  }
+}

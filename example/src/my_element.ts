@@ -5,7 +5,7 @@ import {
   html,
   property,
   Shadow,
-} from "../mod.ts";
+} from "../../mod.ts";
 
 @customElement("my-element")
 export class MyElement extends Shadow {
@@ -54,7 +54,7 @@ export class MyElement extends Shadow {
   }
 
   updated() {
-    this.dom.class["myLi"].forEach((li, i) =>
+    this.dom.class["myLi"].forEach((li) =>
       setInterval(
         () => (li.style.background =
           this.colors[Math.floor(Math.random() * 6)]),
@@ -63,7 +63,7 @@ export class MyElement extends Shadow {
     );
   }
 
-  clickHandler(e: MouseEvent) {
+  clickHandler(_e: MouseEvent) {
     return ++this.h1Content;
   }
 

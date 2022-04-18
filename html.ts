@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import htm from "./deps.ts";
 import { isObject, stringify } from "./util.ts";
 

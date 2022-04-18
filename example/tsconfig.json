@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-    "removeComments": true,
-    "lib": ["esnext", "dom", "dom.iterable"],
-    "experimentalDecorators": true,
-    "importsNotUsedAsValues": "preserve",
-    "strict": true
-  }
-}
