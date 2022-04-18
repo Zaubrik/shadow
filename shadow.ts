@@ -39,7 +39,7 @@ class ShadowError extends Error {
 }
 
 export class Shadow extends HTMLElement {
-  private _renderingCount = 0;
+  private _renderCounter = 0;
   private _waitingList = new Set<string>();
   private _accessorsStore = new Map<string, unknown>();
   private _updateCustomEvent = new CustomEvent("_updated");
@@ -311,7 +311,7 @@ export class Shadow extends HTMLElement {
    * the event `_updated`.
    */
   private _actuallyRender(): void {
-    if (this._renderingCount > 0) {
+    if (this._renderCounter > 0) {
       this.dom.id = {};
       this.dom.class = {};
     }
@@ -329,8 +329,8 @@ export class Shadow extends HTMLElement {
     }
     this.root.prepend(fragment);
     this.dispatchEvent(this._updateCustomEvent);
-    this._renderingCount++;
-    // console.log((this.constructor as typeof Shadow).is, this._renderingCount);
+    this._renderCounter++;
+    // console.log((this.constructor as typeof Shadow).is, this._renderCounter);
   }
 
   /**
