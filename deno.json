@@ -5,7 +5,7 @@
   },
   "compilerOptions": {
     "removeComments": true,
-    "lib": ["esnext", "es2017", "dom", "dom.iterable", "deno.ns"], // include "deno.ns" for deno namespace
+    "lib": ["esnext", "dom", "dom.iterable", "deno.ns"], // include "deno.ns" for deno namespace
     "experimentalDecorators": true,
     "strict": true, /* Enable all strict type-checking options. */
     "strictPropertyInitialization": false, /* Enable strict checking of property initialization in classes. */
