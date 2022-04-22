@@ -6,7 +6,7 @@ Do it all with `deno bundle`: No transpiler or other tools are required.
 
 ## Quick Start
 
-#### Compile `example/my_element.ts`
+#### Compile `example/src/my_element.ts`
 
 ```bash
 deno task bundle
