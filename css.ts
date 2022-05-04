@@ -1,8 +1,8 @@
 import { createTemplate } from "./util.ts";
 
 /**
- * The `css` tag function parses css strings which can contain expressions with
- * the type string or HTMLTemplateElements (containing a script element).
+ * The `css` tag function parses template literals which can contain expressions
+ * of the type `string` or `HTMLTemplateElement`.
  */
 export function css(
   strings: TemplateStringsArray,
