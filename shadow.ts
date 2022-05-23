@@ -264,10 +264,10 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * Adds CSS to the `shadowRoot` dynamically. Pass `true` as second argument if
-   * you want the custom element to be rerendered.
+   * Adds CSS to the `shadowRoot` dynamically. Pass `false` as second argument if
+   * you don't want this method to cause the custom element being rerendered.
    */
-  addCss(ruleSet: string, render = false): void {
+  addCss(ruleSet: string, render = true): void {
     this._dynamicCssStore.push(createTemplate(`<style>${ruleSet}</style>`));
     if (isTrue(render) && isTrue(this._isReady)) this._actuallyRender();
   }
