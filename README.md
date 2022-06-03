@@ -40,6 +40,8 @@ import {
 export class MyElement extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
   @property()
+  initUrl = null;
+  @property()
   h1Content = 0;
   @property()
   firstContent: Attribute = null;
@@ -83,7 +85,7 @@ export class MyElement extends Shadow {
   }
 
   updated() {
-    this.dom.class["myLi"].forEach((li, i) =>
+    this.dom.class["myLi"]?.forEach((li) =>
       setInterval(
         () => (li.style.background =
           this.colors[Math.floor(Math.random() * 6)]),
@@ -92,10 +94,8 @@ export class MyElement extends Shadow {
     );
   }
 
-  clickHandler(e: MouseEvent) {
+  clickHandler(_e: MouseEvent) {
     return ++this.h1Content;
   }
-
-  static observedAttributes = ["init-url"];
 }
 ```
