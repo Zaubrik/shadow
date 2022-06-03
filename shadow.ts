@@ -111,7 +111,6 @@ export class Shadow extends HTMLElement {
    * decorator `property`.
    */
   init(propertiesAndOptions: PropertyAndOptions[]): void {
-    propertiesAndOptions.push({ property: "initUrl", render: false });
     propertiesAndOptions.forEach(this._makePropertyAccessible);
     this._isConnected = true;
     if (isTrue(this._isReady)) {
