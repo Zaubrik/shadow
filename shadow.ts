@@ -11,7 +11,7 @@ import {
   stringify,
 } from "./util.ts";
 
-import type { AllowedExpressions, HReturn } from "./html.ts";
+import type { AllowedExpressions, Collection, HReturn } from "./html.ts";
 
 /**
  * The type of HTML attributes.
@@ -280,20 +280,7 @@ export class Shadow extends HTMLElement {
       if (isObject(input) && input.element instanceof Element) {
         const { element, collection } = input as HReturn;
         documentFragment.appendChild(element);
-        collection.forEach(({ target, queries, eventsAndListeners }) => {
-          if (isHtmlElement(target)) {
-            queries.forEach(({ kind, selector }) =>
-              kind === "id"
-                ? this.dom.id[selector] = target
-                : this.dom.class[selector]
-                ? this.dom.class[selector].push(target)
-                : this.dom.class[selector] = [target]
-            );
-          }
-          eventsAndListeners.forEach(({ event, listener }) =>
-            target.addEventListener(event, listener.bind(this))
-          );
-        });
+        collection.forEach((item) => this._processCollection(item));
       } else if (isString(input)) {
         // NOTE: Allows pure HTML strings without the usage of `htm`.
         documentFragment.appendChild(
@@ -306,6 +293,23 @@ export class Shadow extends HTMLElement {
       }
     });
     return documentFragment;
+  }
+
+  _processCollection(
+    { target, queries, eventsAndListeners }: Collection[number],
+  ) {
+    if (isHtmlElement(target)) {
+      queries.forEach(({ kind, selector }) =>
+        kind === "id"
+          ? this.dom.id[selector] = target
+          : this.dom.class[selector]
+          ? this.dom.class[selector].push(target)
+          : this.dom.class[selector] = [target]
+      );
+    }
+    eventsAndListeners.forEach(({ event, listener }) =>
+      target.addEventListener(event, listener.bind(this))
+    );
   }
 
   /**
@@ -332,7 +336,7 @@ export class Shadow extends HTMLElement {
     this.root.prepend(fragment);
     this.dispatchEvent(this._updateCustomEvent);
     this._renderCounter++;
-    // console.log((this.constructor as typeof Shadow).is, this._renderCounter);
+    // console.log(this.tagName, this._renderCounter);
   }
 
   /**

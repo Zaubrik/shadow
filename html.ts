@@ -17,16 +17,16 @@ export type HReturn = {
   element: HTMLElement | SVGElement;
   collection: Collection;
 };
+export type Collection = {
+  target: HTMLElement | SVGElement;
+  queries: Query[];
+  eventsAndListeners: EventAndListener[];
+}[];
 type EventListener = (event: any) => any;
 type Query = {
   kind: "id" | "class";
   selector: string;
 };
-type Collection = {
-  target: HTMLElement | SVGElement;
-  queries: Query[];
-  eventsAndListeners: EventAndListener[];
-}[];
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
