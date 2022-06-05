@@ -3,6 +3,7 @@ import {
   convertCamelToDash,
   convertDashToCamel,
   createTemplate,
+  isHtmlElement,
   isNull,
   isObject,
   isString,
@@ -220,7 +221,7 @@ export class Shadow extends HTMLElement {
     }
   }
 
-  private _fetchJsonAndUpdate(urlOrPath: string): Promise<void> {
+  private _fetchJsonAndUpdate(urlOrPath: string | URL): Promise<void> {
     return fetch(new URL(urlOrPath, location.href).href).then((res) => {
       if (isTrue(res.ok)) {
         return res.json().then((data) =>
@@ -280,13 +281,15 @@ export class Shadow extends HTMLElement {
         const { element, collection } = input as HReturn;
         documentFragment.appendChild(element);
         collection.forEach(({ target, queries, eventsAndListeners }) => {
-          queries.forEach(({ kind, selector }) =>
-            kind === "id"
-              ? this.dom.id[selector] = target as HTMLElement
-              : this.dom.class[selector]
-              ? this.dom.class[selector].push(target as HTMLElement)
-              : this.dom.class[selector] = [target as HTMLElement]
-          );
+          if (isHtmlElement(target)) {
+            queries.forEach(({ kind, selector }) =>
+              kind === "id"
+                ? this.dom.id[selector] = target
+                : this.dom.class[selector]
+                ? this.dom.class[selector].push(target)
+                : this.dom.class[selector] = [target]
+            );
+          }
           eventsAndListeners.forEach(({ event, listener }) =>
             target.addEventListener(event, listener.bind(this))
           );

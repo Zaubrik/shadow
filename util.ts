@@ -41,3 +41,7 @@ export function isObject(obj: unknown): obj is Record<string, unknown> {
     obj !== null && typeof obj === "object" && Array.isArray(obj) === false
   );
 }
+
+export function isHtmlElement(input: unknown): input is HTMLElement {
+  return input instanceof HTMLElement;
+}
