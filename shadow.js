@@ -307,7 +307,7 @@ export class Shadow extends HTMLElement {
       if (isObject(input) && input.element instanceof Element) {
         const { element, collection } = /**@type {HReturn}*/ (input);
         documentFragment.appendChild(element);
-        collection.forEach(this._processCollection.bind(this));
+        collection.forEach((item) => this._processCollection(item));
       } else if (isString(input)) {
         // NOTE: Allows pure HTML strings without the usage of `htm`.
         documentFragment.appendChild(
