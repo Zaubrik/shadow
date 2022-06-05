@@ -4,18 +4,12 @@
     <meta charset="UTF-8" />
     <title>Shadow</title>
     <link rel="icon" href="data:," />
-    <script src="./dist/my_element.js" type="module"></script>
+    <script src="./niceCounter.js" type="module"></script>
   </head>
   <body>
-    <my-element
-      init-url="./content/data.json"
-      first-content="... attributes or ..."
-    ></my-element>
+    <nice-counter content="Count"></nice-counter>
     <script type="module">
-      const element = document.querySelector("my-element")
-      element.addCss(`#myButton { background:green; }`)
-      element.secondContent = "properties."
-      element.anchorAttributes = { href: "/", target: "_blank" }
+      const counter = document.querySelector("simple-counter")
     </script>
   </body>
 </html>

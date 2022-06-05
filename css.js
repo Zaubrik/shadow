@@ -1,13 +1,13 @@
-import { createTemplate } from "./util.ts";
+import { createTemplate } from "./util.js";
 
 /**
- * The `css` tag function parses template literals which can contain expressions
- * of the type `string` or `HTMLTemplateElement`.
+ * The 'css' tag function parses template literals which can contain expressions
+ * of the type 'string' or 'HTMLTemplateElement'.
+ * @param {TemplateStringsArray} strings
+ * @param {(string | HTMLTemplateElement | HTMLTemplateElement[])[]} values
+ * @returns {HTMLTemplateElement[]}
  */
-export function css(
-  strings: TemplateStringsArray,
-  ...values: (string | HTMLTemplateElement | HTMLTemplateElement[])[]
-): HTMLTemplateElement[] {
+export function css(strings, ...values) {
   const cssTemplates = [];
   cssTemplates.push(
     createTemplate(`<style>${
