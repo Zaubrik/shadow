@@ -1,3 +1,4 @@
+// @ts-check
 import { createTemplate } from "./util.js";
 
 /**

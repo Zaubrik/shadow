@@ -1,8 +1,10 @@
+// @ts-check
 import htm from "./deps.js";
 import { isObject, stringify } from "./util.js";
 
 /**
- * @typedef {| string
+ * @typedef {
+ *   | string
  *   | number
  *   | boolean
  *   | null
@@ -10,7 +12,8 @@ import { isObject, stringify } from "./util.js";
  *   | HReturn
  *   | EventListener
  *   | Record<string, any>
- *   | AllowedExpressions[]} AllowedExpressions
+ *   | AllowedExpressionsArray} AllowedExpressions
+ * @typedef {AllowedExpressions[]} AllowedExpressionsArray
  * @typedef {{ event: string; listener: EventListener }} EventAndListener
  * @typedef {{
  *   element: HTMLElement | SVGElement;
@@ -29,28 +32,36 @@ import { isObject, stringify } from "./util.js";
  */
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-/** @param {any[]} input
+
+/**
+ * @param {any[]} input
  * @returns {boolean}
  */
 function isArrayOfListeners(input) {
   return input.every((i) => typeof i === "function");
 }
-/** @param {string} input
+
+/**
+ * @param {string} input
  * @returns {boolean}
  */
 function isSpecialKey(input) {
   return input === "id" || input === "class";
 }
-/** @param {any} input
+
+/**
+ * @param {any} input
  * @returns {boolean}
  */
 export function isHReturn(input) {
   return isObject(input) && input.element instanceof Element;
 }
-/** @param {string} type
+
+/**
+ * @param {string} type
  * @param {Record<string, any>} props
  * @param {AllowedExpressions[]} children
- * @returns {import("/home/ubustreet/playground/ts-to-jsdoc/input.ts-to-jsdoc").HReturn}
+ * @returns {HReturn}
  */
 export function h(type, props, ...children) {
   const eventsAndListeners = [];
@@ -63,7 +74,7 @@ export function h(type, props, ...children) {
     if (typeof props[key] === "function") {
       eventsAndListeners.push({ event: key, listener: props[key] });
     } else if (Array.isArray(props[key]) && isArrayOfListeners(props[key])) {
-      props[key].forEach((listener) =>
+      props[key].forEach(/**@type {EventListener}*/ (listener) =>
         eventsAndListeners.push({ event: key, listener })
       );
     } else if (key[0] === "@") {
@@ -111,6 +122,7 @@ export function h(type, props, ...children) {
   }
   return { element, collection };
 }
+
 /**
  * Uses [htm (Hyperscript Tagged Markup)](https://github.com/developit/htm) under
  * the hood and works in all modern browsers. The function 'html' takes a

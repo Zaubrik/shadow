@@ -34,7 +34,6 @@ class ShadowError extends Error {
   /** @param {string} message */
   constructor(message) {
     super(message);
-    this.message = message;
     this.name = this.constructor.name;
   }
 }
@@ -42,51 +41,40 @@ class ShadowError extends Error {
 export class Shadow extends HTMLElement {
   /** @private */
   _renderCounter = 0;
+
   /** @private */
   _waitingList = new Set();
+
   /** @private */
   _accessorsStore = new Map();
-  /** @private */
-  _updateCustomEvent = new CustomEvent("_updated");
-  /** @private
+
+  /**
+   * @private
    * @type {PropertyAndOptions[]}
    */
   _propertiesAndOptions = [];
+
   /**
    * Stores the CSS which has been added by the method 'addCss'.
    * @private
    * @type {HTMLTemplateElement[]}
    */
   _dynamicCssStore = [];
+
   /**
    * This boolean will be 'true' when the native method 'connectedCallback' has
    * been called and the properties have been *made accessible*.
    * @private
    */
   _isConnected = false;
+
   /**
    * The initial rendering is delayed until the properties of the fetched JSON
    * object have been assigned to the custom element's properties.
    * @private
    */
   _isPaused = false;
-  /**
-   * Access the 'shadowRoot' through the property 'root'.
-   * @type {ShadowRoot}
-   */
-  root;
-  /**
-   * In 'this.dom' are the child elements stored which match the id and class
-   * selectors marked with the special sign '@'.
-   * @type {Dom}
-   */
-  dom = { id: {}, class: {} };
-  /**
-   * When you assign a url or a path to 'initUrl' then 'Shadow' will fetch a JSON
-   * object and assign its properties to the custom element automatically.
-   * @type {Attribute}
-   */
-  initUrl = null;
+
   /**
    * Indicates if the custom element is ready for the first rendering.
    * @private
@@ -95,30 +83,44 @@ export class Shadow extends HTMLElement {
     return this._isConnected === true && this._isPaused === false &&
       this._waitingList.size === 0;
   }
+
+  /**
+   * Access the 'shadowRoot' through the property 'root'.
+   * @type {ShadowRoot}
+   */
+  root;
+
+  /**
+   * In 'this.dom' are the child elements stored which match the id and class
+   * selectors marked with the special sign '@'.
+   * @type {Dom}
+   */
+  dom = { id: {}, class: {} };
+
   /**
    * The constructor of 'Shadow' takes the optional object 'ShadowRootInit' which
    * will be passed to the native method 'attachShadow'.
+   * @param {ShadowRootInit} options
    */
-  constructor(options = { mode: /** @type {const} */ ("open") }) {
+  constructor(options = { mode: "open" }) {
     super();
     this.root = this.attachShadow(options);
-    this.addEventListener("_updated", /**@type {any}*/ (this.firstUpdated), {
-      once: true,
-    });
-    this.addEventListener("_updated", /**@type {any}*/ (this.updated));
   }
+
   /**
-   * A native custom elements' lifecycle callback. When you use this callback,
-   * you probably want to call 'super.connectedCallback()' inside of it.
+   * A native custom elements' lifecycle callback. It fires each time a custom
+   * element is appended into a *document-connected* element. You can declare
+   * properties with the method 'init' inside of it.
    * @returns {void}
    */
   connectedCallback() {
     this.init(this._propertiesAndOptions);
   }
+
   /**
-   * Call this method inside of 'connectedCallback' if you want to avoid using
-   * the decorator 'property'. The property's options are explained next to the
-   * decorator 'property'.
+   * Manages your declared properties and their corresponding attributes. You can
+   * configure a property so that whenever it changes, its value is reflected to
+   * its observed attribute.
    * @param {PropertyAndOptions[]} propertiesAndOptions
    * @returns {void}
    */
@@ -126,18 +128,20 @@ export class Shadow extends HTMLElement {
     propertiesAndOptions.forEach(this._makePropertyAccessible);
     this._isConnected = true;
     if (isTrue(this._isReady)) {
+      console.log("init:", propertiesAndOptions);
       this._actuallyRender();
     }
   }
 
   /**
-   * It assigns the accessors to the element's property and starts rendering.
+   * Assigns the accessors to the declared properties, updates attributes and
+   * invokes rendering.
    * @private
    * @param {PropertyAndOptions} propertyAndOptions
    * @returns {void}
    */
   _makePropertyAccessible = (
-    { property, reflect = true, render = true, wait = false, assert = false },
+    { property, reflect = false, render = true, wait = false, assert = false },
   ) => {
     if (isTrue(wait)) {
       this._waitingList.add(property);
@@ -169,6 +173,7 @@ export class Shadow extends HTMLElement {
           this._updateAttribute(property, value);
         }
         if (isTrue(render) && isTrue(this._isReady)) {
+          console.log("property:", property);
           this._actuallyRender();
         }
       },
@@ -195,7 +200,7 @@ export class Shadow extends HTMLElement {
           const jsonValue = JSON.stringify(value);
           if (jsonValue === undefined) {
             throw new ShadowError(
-              `Only JSON values can be reflected in attributes but received ` +
+              `Only JSON values can be reflected to attributes but received ` +
                 `the value '${value}' for '${property}'.`,
             );
           }
@@ -208,10 +213,9 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * A native custom elements' lifecycle callback. Here, it manages the reflecting
-   * of properties to attributes. If the attribute 'init-url' has been set to a
-   * url or path it *fetches* a JSON object and assigns its properties to the
-   * custom element.
+   * A native custom elements' lifecycle callback. Whenever an attribute change
+   * fires this callback, 'Shadow' sets the property value from the observed
+   * attribute. The name of the attribute is the *dash-cased* property name.
    * @param {string} name
    * @param {Attribute} oldValue
    * @param {Attribute} newValue
@@ -227,6 +231,7 @@ export class Shadow extends HTMLElement {
         .then(() => {
           this._isPaused = false;
           if (isTrue(this._isReady)) {
+            console.log("attributeChangedCallback:", name, oldValue, newValue);
             this._actuallyRender();
           }
         });
@@ -235,7 +240,10 @@ export class Shadow extends HTMLElement {
     }
   }
 
-  /** @private
+  /**
+   * If the attribute 'init-url' has been set to a url or path, it *fetches* a
+   * JSON object and assigns the object's properties to the custom element.
+   * @private
    * @param {string | URL} urlOrPath
    * @returns {Promise<void>}
    */
@@ -254,12 +262,13 @@ export class Shadow extends HTMLElement {
       }
     })
       .catch((err) => {
-        throw new ShadowError(err.message);
+        throw new ShadowError("init-url: " + err.message);
       });
   }
 
   /**
-   * Compares and reflects properties to attributes.
+   * Sets the value of the *camel-cased* property to the attribute's value with
+   * 'JSON.parse'.
    * @param {string} name
    * @param {Attribute} value
    * @returns {void}
@@ -297,7 +306,8 @@ export class Shadow extends HTMLElement {
     if (isTrue(render) && isTrue(this._isReady)) this._actuallyRender();
   }
 
-  /** @private
+  /**
+   * @private
    * @param {AllowedExpressions[]} inputArray
    * @returns {DocumentFragment}
    */
@@ -322,7 +332,9 @@ export class Shadow extends HTMLElement {
     return documentFragment;
   }
 
-  /** @private
+  /**
+   * Assign tagged 'HTMLElements' to the 'dom' property and add event listeners.
+   * @private
    * @param {Collection[number]} collectionItem
    * @returns {void}
    */
@@ -342,8 +354,8 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * Calls the method 'this.render', processes the return value and dispatches
-   * the event '_updated'.
+   * Calls the method 'this.render', processes the return value and invokes the
+   * methods 'updated' and 'firstUpdated'.
    * @private
    * @returns {void}
    */
@@ -365,9 +377,10 @@ export class Shadow extends HTMLElement {
       );
     }
     this.root.prepend(fragment);
-    this.dispatchEvent(this._updateCustomEvent);
     this._renderCounter++;
-    // console.log(this.tagName, this._renderCounter);
+    if (this._renderCounter === 1) this.firstUpdated();
+    this.updated();
+    console.log(this.tagName, this._renderCounter);
   }
 
   /**
@@ -381,15 +394,17 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * @param {CustomEvent} _event
-   * @return {void}
+   * A modifiable lifecycle callback which is called after the first update which
+   * includes rendering.
+   * @returns {void}
    */
-  firstUpdated(_event) {}
+  firstUpdated() {}
   /**
-   * @param {CustomEvent} _event
-   * @return {void}
+   * A modifiable lifecycle callback which is called after each update which
+   * includes rendering.
+   * @returns {void}
    */
-  updated(_event) {}
+  updated() {}
 
   /**
    * Contains the return value of the function 'css', which is an array of
@@ -398,10 +413,4 @@ export class Shadow extends HTMLElement {
    * @type {HTMLTemplateElement[]}
    */
   static styles = [];
-  /**
-   * The decorator 'customElement' sets this static property to the
-   * custom element's tag name automatically.
-   * @static
-   */
-  static is = undefined;
 }

@@ -1,4 +1,4 @@
-import { css, html, Shadow } from "./mod.js";
+import { css, html, Shadow } from "../../mod.js";
 
 export class MyElement extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
@@ -6,18 +6,16 @@ export class MyElement extends Shadow {
   h1Content = 0;
   firstContent = null;
   secondContent = null;
+  /** @type {string[]} */
   items = [];
   anchorAttributes = {};
 
   connectedCallback() {
     super.connectedCallback();
     this.init([
-      { property: "initUrl" },
       { property: "h1Content" },
-      { property: "firstContent" },
       { property: "secondContent" },
-      { property: "items", reflect: false },
-      { property: "anchorAttributes", reflect: false },
+      { property: "anchorAttributes" },
     ]);
   }
 
@@ -63,7 +61,7 @@ export class MyElement extends Shadow {
     );
   }
 
-  clickHandler(_e) {
+  clickHandler() {
     return ++this.h1Content;
   }
 
