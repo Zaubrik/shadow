@@ -45,14 +45,13 @@ export class MyElement extends Shadow {
   items = [];
   anchorAttributes = {};
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.declare([
-      { property: "h1Content" },
-      { property: "secondContent" },
-      { property: "anchorAttributes" },
-    ]);
-  }
+  static properties = {
+    h1Content: {},
+    secondContent: {},
+    anchorAttributes: {},
+  };
+
+  static observedAttributes = ["init-url", "first-content"];
 
   static styles = css`
     :host {
@@ -103,8 +102,6 @@ export class MyElement extends Shadow {
   clickHandler() {
     return ++this.h1Content;
   }
-
-  static observedAttributes = ["init-url", "first-content"];
 }
 
 window.customElements.define("my-element", MyElement);

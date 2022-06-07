@@ -5,22 +5,10 @@ export class SimpleCounter extends Shadow {
   h1Content = 0;
   content = "";
 
-  connectedCallback() {
-    this.declareWithoutRendering([
-      { property: "h1Content" },
-      { property: "content", reflect: true },
-    ]);
-  }
-
-  /**
-   * Renaming 'declare' avoids an additional rendering here.
-   * @typedef {import('../../shadow.js').PropertyAndOptions} PropertyAndOptions
-   * @param {PropertyAndOptions[]} propertiesAndOptions
-   */
-  declareWithoutRendering(propertiesAndOptions) {
-    //@ts-ignore private method
-    propertiesAndOptions.forEach(this._makePropertyAccessible);
-  }
+  static properties = {
+    h1Content: {},
+    content: { reflect: true },
+  };
 
   add() {
     return ++this.h1Content;

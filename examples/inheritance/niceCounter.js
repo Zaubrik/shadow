@@ -4,10 +4,8 @@ import { css, html } from "../../mod.js";
 
 export class NiceCounter extends SimpleCounter {
   h2Content = "h2";
-  connectedCallback() {
-    super.connectedCallback();
-    this.declare([{ property: "h2Content" }]);
-  }
+
+  static properties = { h2Content: {}, ...SimpleCounter.properties };
 
   static styles = css`
   /** external styles */

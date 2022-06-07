@@ -21,12 +21,11 @@ import {
  * class: Record<string, HTMLElement[]>;
  * }} Dom
  * @typedef {{
- * property: string;
  * reflect?: boolean;
  * render?: boolean;
  * wait?: boolean;
  * assert?: boolean;
- * }} PropertyAndOptions
+ * }} PropertyOptions
  */
 
 /** @extends Error */
@@ -47,12 +46,6 @@ export class Shadow extends HTMLElement {
 
   /** @private */
   _accessorsStore = new Map();
-
-  /**
-   * @private
-   * @type {PropertyAndOptions[]}
-   */
-  _propertiesAndOptions = [];
 
   /**
    * Stores the CSS which has been added by the method 'addCss'.
@@ -109,23 +102,21 @@ export class Shadow extends HTMLElement {
 
   /**
    * A native custom elements' lifecycle callback. It fires each time a custom
-   * element is appended into a *document-connected* element. You can declare
-   * properties with the method 'declare' inside of it.
+   * element is appended into a *document-connected* element.
    * @returns {void}
    */
   connectedCallback() {
-    this.declare(this._propertiesAndOptions);
+    this.init();
   }
 
   /**
-   * Manages your declared properties and their corresponding attributes. You can
-   * configure a property so that whenever it changes, its value is reflected to
-   * its observed attribute.
-   * @param {PropertyAndOptions[]} propertiesAndOptions
+   * Manages your declared properties and their corresponding attributes and
+   * begins to render.
    * @returns {void}
    */
-  declare(propertiesAndOptions) {
-    propertiesAndOptions.forEach(this._makePropertyAccessible);
+  init() {
+    Object.entries(/**@type {typeof Shadow}*/ (this.constructor).properties)
+      .forEach(this._makePropertyAccessible);
     this._isConnected = true;
     if (isTrue(this._isReady)) {
       this._actuallyRender();
@@ -136,11 +127,14 @@ export class Shadow extends HTMLElement {
    * Assigns the accessors to the declared properties, updates attributes and
    * invokes rendering.
    * @private
-   * @param {PropertyAndOptions} propertyAndOptions
+   * @param {[string, PropertyOptions ]} propertyAndOptions
    * @returns {void}
    */
   _makePropertyAccessible = (
-    { property, reflect = false, render = true, wait = false, assert = false },
+    [
+      property,
+      { reflect = false, render = true, wait = false, assert = false },
+    ],
   ) => {
     if (isTrue(wait)) {
       this._waitingList.add(property);
@@ -403,6 +397,18 @@ export class Shadow extends HTMLElement {
    * @returns {void}
    */
   updated() {}
+
+  /**
+   * You can pass the following options together with the properties:
+   * 1. Setting 'reflect' to 'true' configures a property so that whenever it
+   * changes, its value is reflected to its observed attribute. (false)
+   * 2. Setting 'render' to 'false' stops rerendering on property changes. (true)
+   * 3. Wait for an assignment before rendering with the option 'wait'. (false)
+   * 4. Assert with the option 'assert' if the input has a *truthy* value. (false)
+   * @static
+   * @type {Record<string, PropertyOptions>}
+   */
+  static properties = {};
 
   /**
    * Contains the return value of the function 'css', which is an array of
