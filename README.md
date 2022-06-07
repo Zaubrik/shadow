@@ -1,21 +1,27 @@
 # shadow
 
-Shadow is simple base class for creating fast, lightweight Web Components with
-[htm](https://github.com/developit/htm).\
-Do it all with `deno bundle`: No transpiler or other tools are required.
+Shadow is a simple base class for creating fast, lightweight
+[Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components)
+with [htm](https://github.com/developit/htm).
+
+Written in JavaScript but _strictly typed_ with
+[JSDoc](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html),
+you don't need any transpiler or other tools. Although
+[deno](https://deno.land/) would certainly make the development process a
+greater joy.
 
 ## Quick Start
 
-#### Compile `example/src/my_element.js`
-
-```bash
-deno task bundle
-```
-
-#### Serve `index.html`
+#### Serve example
 
 ```bash
 deno task serve
+```
+
+#### Type check your custom element
+
+```bash
+deno check ./examples/showcase/my_element.js
 ```
 
 #### Print the documented API
@@ -26,5 +32,84 @@ deno doc https://deno.land/x/shadow/mod.js
 
 ## Example
 
-```typescript
+```javascript
+import { css, html, Shadow } from "../../mod.js"
+
+export class MyElement extends Shadow {
+  colors = ["yellow", "green", "pink", "red", "blue", "orange"]
+  initUrl = null
+  h1Content = 0
+  firstContent = null
+  secondContent = null
+  /** @type {string[]} */
+  items = []
+  anchorAttributes = {}
+
+  connectedCallback() {
+    super.connectedCallback()
+    this.declare([
+      { property: "h1Content" },
+      { property: "secondContent" },
+      { property: "anchorAttributes" },
+    ])
+  }
+
+  static styles = css`
+    :host {
+      display: block;
+      margin: 16px;
+    }
+    h1 {
+      color: blue;
+    }
+    #myButton {
+      border-radius: 30px;
+    }
+    .text {
+      margin: 50px;
+      color: brown;
+    }
+    a {
+      color: blue;
+    }
+    .myLi {
+      width: 200px;
+      background-color: pink;
+    }
+  `
+
+  render() {
+    return html`<h1>${this.h1Content}</h1>
+      <button id="myButton" click=${this.clickHandler}>Count</button>
+      <p class="text">You can change values through...</p>
+      <p class="text">${this.firstContent}</p>
+      <p class="text">${this.secondContent}</p>
+      <ul>
+        ${this.items.map((item) => html`<li @class="myLi">${item}</li>`)}
+      </ul>
+      <p class="text"><a ...${this.anchorAttributes}>Anchor Text</a></p>`
+  }
+
+  updated() {
+    this.dom.class["myLi"]?.forEach((li) =>
+      setInterval(
+        () =>
+          (li.style.background = this.colors[Math.floor(Math.random() * 6)]),
+        500
+      )
+    )
+  }
+
+  clickHandler() {
+    return ++this.h1Content
+  }
+
+  static observedAttributes = ["init-url", "first-content"]
+}
+
+window.customElements.define("my-element", MyElement)
 ```
+
+## Contribution
+
+We welcome and appreciate all contributions to shadow.

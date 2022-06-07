@@ -6,7 +6,7 @@ export class NiceCounter extends SimpleCounter {
   h2Content = "h2";
   connectedCallback() {
     super.connectedCallback();
-    this.init([{ property: "h2Content" }]);
+    this.declare([{ property: "h2Content" }]);
   }
 
   static styles = css`

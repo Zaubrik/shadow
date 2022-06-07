@@ -12,7 +12,7 @@ export class MyElement extends Shadow {
 
   connectedCallback() {
     super.connectedCallback();
-    this.init([
+    this.declare([
       { property: "h1Content" },
       { property: "secondContent" },
       { property: "anchorAttributes" },
@@ -20,6 +20,10 @@ export class MyElement extends Shadow {
   }
 
   static styles = css`
+    :host {
+      display: block;
+      margin: 16px;
+    }
     h1 {
       color: blue;
     }

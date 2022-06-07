@@ -110,11 +110,11 @@ export class Shadow extends HTMLElement {
   /**
    * A native custom elements' lifecycle callback. It fires each time a custom
    * element is appended into a *document-connected* element. You can declare
-   * properties with the method 'init' inside of it.
+   * properties with the method 'declare' inside of it.
    * @returns {void}
    */
   connectedCallback() {
-    this.init(this._propertiesAndOptions);
+    this.declare(this._propertiesAndOptions);
   }
 
   /**
@@ -124,11 +124,10 @@ export class Shadow extends HTMLElement {
    * @param {PropertyAndOptions[]} propertiesAndOptions
    * @returns {void}
    */
-  init(propertiesAndOptions) {
+  declare(propertiesAndOptions) {
     propertiesAndOptions.forEach(this._makePropertyAccessible);
     this._isConnected = true;
     if (isTrue(this._isReady)) {
-      console.log("init:", propertiesAndOptions);
       this._actuallyRender();
     }
   }
@@ -173,7 +172,6 @@ export class Shadow extends HTMLElement {
           this._updateAttribute(property, value);
         }
         if (isTrue(render) && isTrue(this._isReady)) {
-          console.log("property:", property);
           this._actuallyRender();
         }
       },
@@ -216,6 +214,8 @@ export class Shadow extends HTMLElement {
    * A native custom elements' lifecycle callback. Whenever an attribute change
    * fires this callback, 'Shadow' sets the property value from the observed
    * attribute. The name of the attribute is the *dash-cased* property name.
+   * If the special attribute 'init-url' has been set to a url or path, a JSON
+   * object will be *fetched* and assigned to the custom element's properties.
    * @param {string} name
    * @param {Attribute} oldValue
    * @param {Attribute} newValue
@@ -231,7 +231,6 @@ export class Shadow extends HTMLElement {
         .then(() => {
           this._isPaused = false;
           if (isTrue(this._isReady)) {
-            console.log("attributeChangedCallback:", name, oldValue, newValue);
             this._actuallyRender();
           }
         });
@@ -241,8 +240,7 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * If the attribute 'init-url' has been set to a url or path, it *fetches* a
-   * JSON object and assigns the object's properties to the custom element.
+   * Fetches a JSON object and assigns the object's properties to the element.
    * @private
    * @param {string | URL} urlOrPath
    * @returns {Promise<void>}
@@ -317,7 +315,7 @@ export class Shadow extends HTMLElement {
       if (isObject(input) && input.element instanceof Element) {
         const { element, collection } = /**@type {HReturn}*/ (input);
         documentFragment.appendChild(element);
-        collection.forEach((item) => this._processCollection(item));
+        collection.forEach(this._processCollection);
       } else if (isString(input)) {
         // NOTE: Allows pure HTML strings without the usage of `htm`.
         documentFragment.appendChild(
@@ -338,7 +336,7 @@ export class Shadow extends HTMLElement {
    * @param {Collection[number]} collectionItem
    * @returns {void}
    */
-  _processCollection({ target, queries, eventsAndListeners }) {
+  _processCollection = ({ target, queries, eventsAndListeners }) => {
     if (isHtmlElement(target)) {
       queries.forEach(({ kind, selector }) =>
         kind === "id"
@@ -351,7 +349,7 @@ export class Shadow extends HTMLElement {
     eventsAndListeners.forEach(({ event, listener }) =>
       target.addEventListener(event, listener.bind(this))
     );
-  }
+  };
 
   /**
    * Calls the method 'this.render', processes the return value and invokes the
@@ -380,7 +378,7 @@ export class Shadow extends HTMLElement {
     this._renderCounter++;
     if (this._renderCounter === 1) this.firstUpdated();
     this.updated();
-    console.log(this.tagName, this._renderCounter);
+    // console.log(this.tagName, this._renderCounter);
   }
 
   /**
