@@ -106,15 +106,16 @@ export class Shadow extends HTMLElement {
    * @returns {void}
    */
   connectedCallback() {
-    this.init();
+    this._init();
   }
 
   /**
    * Manages your declared properties and their corresponding attributes and
    * begins to render.
+   * @private
    * @returns {void}
    */
-  init() {
+  _init() {
     Object.entries(/**@type {typeof Shadow}*/ (this.constructor).properties)
       .forEach(this._makePropertyAccessible);
     this._isConnected = true;
