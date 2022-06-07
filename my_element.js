@@ -1,4 +1,4 @@
-import { css, html, Shadow } from "https://deno.land/x/shadow@v1.0.9/mod.js";
+import { css, html, Shadow } from "https://deno.land/x/shadow@v1.1.0/mod.js";
 
 export class MyElement extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
@@ -10,14 +10,13 @@ export class MyElement extends Shadow {
   items = [];
   anchorAttributes = {};
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.declare([
-      { property: "h1Content" },
-      { property: "secondContent" },
-      { property: "anchorAttributes" },
-    ]);
-  }
+  static properties = {
+    h1Content: {},
+    secondContent: {},
+    anchorAttributes: {},
+  };
+
+  static observedAttributes = ["init-url", "first-content"];
 
   static styles = css`
     :host {
@@ -68,8 +67,6 @@ export class MyElement extends Shadow {
   clickHandler() {
     return ++this.h1Content;
   }
-
-  static observedAttributes = ["init-url", "first-content"];
 }
 
 window.customElements.define("my-element", MyElement);
