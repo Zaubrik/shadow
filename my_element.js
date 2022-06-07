@@ -1,4 +1,4 @@
-import { css, html, Shadow } from "https://deno.land/x/shadow/mod.js";
+import { css, html, Shadow } from "https://deno.land/x/shadow@v1.0.9/mod.js";
 
 export class MyElement extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
