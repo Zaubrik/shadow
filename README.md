@@ -33,25 +33,25 @@ deno doc https://deno.land/x/shadow/mod.js
 ## Example
 
 ```javascript
-import { css, html, Shadow } from "../../mod.js"
+import { css, html, Shadow } from "https://deno.land/x/shadow/mod.js";
 
 export class MyElement extends Shadow {
-  colors = ["yellow", "green", "pink", "red", "blue", "orange"]
-  initUrl = null
-  h1Content = 0
-  firstContent = null
-  secondContent = null
+  colors = ["yellow", "green", "pink", "red", "blue", "orange"];
+  initUrl = null;
+  h1Content = 0;
+  firstContent = null;
+  secondContent = null;
   /** @type {string[]} */
-  items = []
-  anchorAttributes = {}
+  items = [];
+  anchorAttributes = {};
 
   connectedCallback() {
-    super.connectedCallback()
+    super.connectedCallback();
     this.declare([
       { property: "h1Content" },
       { property: "secondContent" },
       { property: "anchorAttributes" },
-    ])
+    ]);
   }
 
   static styles = css`
@@ -76,7 +76,7 @@ export class MyElement extends Shadow {
       width: 200px;
       background-color: pink;
     }
-  `
+  `;
 
   render() {
     return html`<h1>${this.h1Content}</h1>
@@ -87,27 +87,27 @@ export class MyElement extends Shadow {
       <ul>
         ${this.items.map((item) => html`<li @class="myLi">${item}</li>`)}
       </ul>
-      <p class="text"><a ...${this.anchorAttributes}>Anchor Text</a></p>`
+      <p class="text"><a ...${this.anchorAttributes}>Anchor Text</a></p>`;
   }
 
   updated() {
     this.dom.class["myLi"]?.forEach((li) =>
       setInterval(
-        () =>
-          (li.style.background = this.colors[Math.floor(Math.random() * 6)]),
-        500
+        () => (li.style.background =
+          this.colors[Math.floor(Math.random() * 6)]),
+        500,
       )
-    )
+    );
   }
 
   clickHandler() {
-    return ++this.h1Content
+    return ++this.h1Content;
   }
 
-  static observedAttributes = ["init-url", "first-content"]
+  static observedAttributes = ["init-url", "first-content"];
 }
 
-window.customElements.define("my-element", MyElement)
+window.customElements.define("my-element", MyElement);
 ```
 
 ## Contribution
