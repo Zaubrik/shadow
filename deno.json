@@ -1,12 +1,12 @@
 {
   "tasks": {
-    "serve": "deno run --allow-net --allow-read https://deno.land/std/http/file_server.ts example/",
-    "bundle": "deno bundle example/src/my_element.ts > example/dist/my_element.js"
+    "serve": "deno run --allow-net --allow-read https://deno.land/std/http/file_server.ts ./"
   },
   "compilerOptions": {
     "removeComments": true,
     "lib": ["esnext", "dom", "dom.iterable", "deno.ns"],
     "strict": true,
-    "importsNotUsedAsValues": "preserve"
+    "importsNotUsedAsValues": "preserve",
+    "checkJs": true
   }
 }

@@ -1,29 +1,29 @@
-import {
-  Attribute,
-  css,
-  customElement,
-  html,
-  property,
-  Shadow,
-} from "../../mod.ts";
+import { css, html, Shadow } from "../../mod.js";
 
-@customElement("my-element")
 export class MyElement extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
-  @property()
   initUrl = null;
-  @property()
   h1Content = 0;
-  @property()
-  firstContent: Attribute = null;
-  @property()
-  secondContent: Attribute = null;
-  @property({ reflect: false })
-  items: string[] = [];
-  @property({ reflect: false })
-  anchorAttributes: { href?: string; ping?: string; target?: string } = {};
+  firstContent = null;
+  secondContent = null;
+  /** @type {string[]} */
+  items = [];
+  anchorAttributes = {};
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.declare([
+      { property: "h1Content" },
+      { property: "secondContent" },
+      { property: "anchorAttributes" },
+    ]);
+  }
 
   static styles = css`
+    :host {
+      display: block;
+      margin: 16px;
+    }
     h1 {
       color: blue;
     }
@@ -65,7 +65,11 @@ export class MyElement extends Shadow {
     );
   }
 
-  clickHandler(_e: MouseEvent) {
+  clickHandler() {
     return ++this.h1Content;
   }
+
+  static observedAttributes = ["init-url", "first-content"];
 }
+
+window.customElements.define("my-element", MyElement);

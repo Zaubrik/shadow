@@ -1,58 +1,64 @@
 # shadow
 
-Shadow is simple base class for creating fast, lightweight Web Components with
-[htm](https://github.com/developit/htm).\
-Do it all with `deno bundle`: No transpiler or other tools are required.
+Shadow is a simple base class for creating fast, lightweight
+[Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components)
+with [htm](https://github.com/developit/htm).
+
+Written in JavaScript but _strictly typed_ with
+[JSDoc](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html),
+you don't need any transpiler or other tools. Although
+[deno](https://deno.land/) would certainly make the development process a
+greater joy.
 
 ## Quick Start
 
-#### Compile `example/src/my_element.ts`
-
-```bash
-deno task bundle
-```
-
-#### Serve `index.html`
+#### Serve example
 
 ```bash
 deno task serve
 ```
 
+#### Type check your custom element
+
+```bash
+deno check ./examples/showcase/my_element.js
+```
+
 #### Print the documented API
 
 ```bash
-deno doc https://deno.land/x/shadow/mod.ts
+deno doc https://deno.land/x/shadow/mod.js
 ```
 
 ## Example
 
-```typescript
-import {
-  Attribute,
-  css,
-  customElement,
-  html,
-  property,
-  Shadow,
-} from "https://deno.land/x/shadow/mod.ts";
+```javascript
+import { css, html, Shadow } from "https://deno.land/x/shadow/mod.js";
 
-@customElement("my-element")
 export class MyElement extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
-  @property()
   initUrl = null;
-  @property()
   h1Content = 0;
-  @property()
-  firstContent: Attribute = null;
-  @property()
-  secondContent: Attribute = null;
-  @property({ reflect: false })
-  items: string[] = [];
-  @property({ reflect: false })
-  anchorAttributes: { href?: string; ping?: string; target?: string } = {};
+  firstContent = null;
+  secondContent = null;
+  /** @type {string[]} */
+  items = [];
+  anchorAttributes = {};
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.declare([
+      { property: "h1Content" },
+      { property: "secondContent" },
+      { property: "anchorAttributes" },
+    ]);
+  }
 
   static styles = css`
+    :host {
+      display: block;
+      margin: 16px;
+    }
     h1 {
       color: blue;
     }
@@ -94,8 +100,16 @@ export class MyElement extends Shadow {
     );
   }
 
-  clickHandler(_e: MouseEvent) {
+  clickHandler() {
     return ++this.h1Content;
   }
+
+  static observedAttributes = ["init-url", "first-content"];
 }
+
+window.customElements.define("my-element", MyElement);
 ```
+
+## Contribution
+
+We welcome and appreciate all contributions to shadow.

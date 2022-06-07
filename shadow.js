@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-explicit-any
+// @ts-check
 import {
   convertCamelToDash,
   convertDashToCamel,
@@ -9,108 +9,122 @@ import {
   isString,
   isTrue,
   stringify,
-} from "./util.ts";
-
-import type { AllowedExpressions, Collection, HReturn } from "./html.ts";
+} from "./util.js";
 
 /**
- * The type of HTML attributes.
+ * @typedef {import('./html.js').AllowedExpressions} AllowedExpressions
+ * @typedef {import('./html.js').HReturn} HReturn
+ * @typedef {import('./html.js').Collection} Collection
+ * @typedef {string | null} Attribute
+ * @typedef {{
+ * id: Record<string, HTMLElement>;
+ * class: Record<string, HTMLElement[]>;
+ * }} Dom
+ * @typedef {{
+ * property: string;
+ * reflect?: boolean;
+ * render?: boolean;
+ * wait?: boolean;
+ * assert?: boolean;
+ * }} PropertyAndOptions
  */
-export type Attribute = string | null;
 
-export type PropertyAndOptions = {
-  property: string;
-  reflect?: boolean;
-  render?: boolean;
-  wait?: boolean;
-  assert?: boolean;
-};
-
-type Dom = {
-  id: Record<string, HTMLElement>;
-  class: Record<string, HTMLElement[]>;
-};
-
+/** @extends Error */
 class ShadowError extends Error {
-  constructor(message: string) {
+  /** @param {string} message */
+  constructor(message) {
     super(message);
     this.name = this.constructor.name;
   }
 }
-
+/** @extends HTMLElement */
 export class Shadow extends HTMLElement {
-  private _renderCounter = 0;
-  private _waitingList = new Set<string>();
-  private _accessorsStore = new Map<string, unknown>();
-  private _updateCustomEvent = new CustomEvent("_updated");
-  private _propertiesAndOptions: PropertyAndOptions[];
+  /** @private */
+  _renderCounter = 0;
+
+  /** @private */
+  _waitingList = new Set();
+
+  /** @private */
+  _accessorsStore = new Map();
+
   /**
-   * Stores the CSS which has been added by the method `addCss`.
+   * @private
+   * @type {PropertyAndOptions[]}
    */
-  private _dynamicCssStore: HTMLTemplateElement[] = [];
+  _propertiesAndOptions = [];
+
   /**
-   * This boolean will be `true` when the native method `connectedCallback` has
+   * Stores the CSS which has been added by the method 'addCss'.
+   * @private
+   * @type {HTMLTemplateElement[]}
+   */
+  _dynamicCssStore = [];
+
+  /**
+   * This boolean will be 'true' when the native method 'connectedCallback' has
    * been called and the properties have been *made accessible*.
+   * @private
    */
-  private _isConnected = false;
+  _isConnected = false;
+
   /**
    * The initial rendering is delayed until the properties of the fetched JSON
    * object have been assigned to the custom element's properties.
+   * @private
    */
-  private _isPaused = false;
-  /**
-   * Access the `shadowRoot` through the property `root`.
-   */
-  root: ShadowRoot;
-  /**
-   * In `this.dom` are the child elements stored which match the id and class
-   * selectors marked with the special sign `@`.
-   */
-  dom: Dom = { id: {}, class: {} };
-  /**
-   * When you assign a url or a path to `initUrl` then `Shadow` will fetch a JSON
-   * object and assign its properties to the custom element automatically.
-   */
-  initUrl: Attribute = null;
+  _isPaused = false;
+
   /**
    * Indicates if the custom element is ready for the first rendering.
+   * @private
    */
-  private get _isReady(): boolean {
+  get _isReady() {
     return this._isConnected === true && this._isPaused === false &&
       this._waitingList.size === 0;
   }
+
   /**
-   * The constructor of `Shadow` takes the optional object `ShadowRootInit` which
-   * will be passed to the native method `attachShadow`.
+   * Access the 'shadowRoot' through the property 'root'.
+   * @type {ShadowRoot}
    */
-  constructor(options: ShadowRootInit = { mode: "open" }) {
+  root;
+
+  /**
+   * In 'this.dom' are the child elements stored which match the id and class
+   * selectors marked with the special sign '@'.
+   * @type {Dom}
+   */
+  dom = { id: {}, class: {} };
+
+  /**
+   * The constructor of 'Shadow' takes the optional object 'ShadowRootInit' which
+   * will be passed to the native method 'attachShadow'.
+   * @param {ShadowRootInit} options
+   */
+  constructor(options = { mode: "open" }) {
     super();
     this.root = this.attachShadow(options);
-    // NOTE: `__propertiesAndOptions` is defined by the decorator `property`.
-    this._propertiesAndOptions = (this as any).__propertiesAndOptions || [];
-    if (this.firstUpdated) {
-      this.addEventListener("_updated", this.firstUpdated as any, {
-        once: true,
-      });
-    }
-    if (this.updated) {
-      this.addEventListener("_updated", this.updated as any);
-    }
   }
 
   /**
-   * A native custom elements' lifecycle callback. When you use this callback,
-   * you probably want to call `super.connectedCallback()` inside of it.
+   * A native custom elements' lifecycle callback. It fires each time a custom
+   * element is appended into a *document-connected* element. You can declare
+   * properties with the method 'declare' inside of it.
+   * @returns {void}
    */
   connectedCallback() {
-    this.init(this._propertiesAndOptions);
+    this.declare(this._propertiesAndOptions);
   }
+
   /**
-   * Call this method inside of 'connectedCallback' if you want to avoid using
-   * the decorator `property`. The property's options are explained next to the
-   * decorator `property`.
+   * Manages your declared properties and their corresponding attributes. You can
+   * configure a property so that whenever it changes, its value is reflected to
+   * its observed attribute.
+   * @param {PropertyAndOptions[]} propertiesAndOptions
+   * @returns {void}
    */
-  init(propertiesAndOptions: PropertyAndOptions[]): void {
+  declare(propertiesAndOptions) {
     propertiesAndOptions.forEach(this._makePropertyAccessible);
     this._isConnected = true;
     if (isTrue(this._isReady)) {
@@ -119,32 +133,32 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * It assigns the accessors to the element's property and starts rendering.
+   * Assigns the accessors to the declared properties, updates attributes and
+   * invokes rendering.
+   * @private
+   * @param {PropertyAndOptions} propertyAndOptions
+   * @returns {void}
    */
-  private _makePropertyAccessible = ({
-    property,
-    reflect = true,
-    render = true,
-    wait = false,
-    assert = false,
-  }: PropertyAndOptions): void => {
+  _makePropertyAccessible = (
+    { property, reflect = false, render = true, wait = false, assert = false },
+  ) => {
     if (isTrue(wait)) {
       this._waitingList.add(property);
-    } else if (isTrue(assert) && !(this as any)[property]) {
+    } else if (isTrue(assert) && !/**@type {any}*/ (this)[property]) {
       throw new ShadowError(
         `The property ${property} must have a truthy value.`,
       );
     }
 
-    this._accessorsStore.set(property, (this as any)[property]);
+    this._accessorsStore.set(property, /**@type {any}*/ (this)[property]);
 
     if (isTrue(reflect)) {
-      this._updateAttribute(property, (this as any)[property]);
+      this._updateAttribute(property, /**@type {any}*/ (this)[property]);
     }
 
     Object.defineProperty(this, property, {
       get: () => this._accessorsStore.get(property),
-      set: (value: unknown) => {
+      set: (value) => {
         if (isTrue(assert) && !value) {
           throw new ShadowError(
             `The property '${property}' must have a truthy value.`,
@@ -166,8 +180,12 @@ export class Shadow extends HTMLElement {
 
   /**
    * Sets and removes attributes.
+   * @private
+   * @param {string} property
+   * @param {unknown} value
+   * @returns {void}
    */
-  private _updateAttribute(property: string, value: unknown): void {
+  _updateAttribute(property, value) {
     const attributeName = convertCamelToDash(property);
     const attributeValue = this.getAttribute(attributeName);
     if (attributeValue !== value) {
@@ -180,7 +198,7 @@ export class Shadow extends HTMLElement {
           const jsonValue = JSON.stringify(value);
           if (jsonValue === undefined) {
             throw new ShadowError(
-              `Only JSON values can be reflected in attributes but received ` +
+              `Only JSON values can be reflected to attributes but received ` +
                 `the value '${value}' for '${property}'.`,
             );
           }
@@ -193,16 +211,17 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * A native custom elements' lifecycle callback. Here, it manages the reflecting
-   * of properties to attributes. If the attribute `init-url` has been set to a
-   * url or path it *fetches* a JSON object and assigns its properties to the
-   * custom element.
+   * A native custom elements' lifecycle callback. Whenever an attribute change
+   * fires this callback, 'Shadow' sets the property value from the observed
+   * attribute. The name of the attribute is the *dash-cased* property name.
+   * If the special attribute 'init-url' has been set to a url or path, a JSON
+   * object will be *fetched* and assigned to the custom element's properties.
+   * @param {string} name
+   * @param {Attribute} oldValue
+   * @param {Attribute} newValue
+   * @returns {void}
    */
-  attributeChangedCallback(
-    name: string,
-    oldValue: Attribute,
-    newValue: Attribute,
-  ): void {
+  attributeChangedCallback(name, oldValue, newValue) {
     if (newValue === oldValue) {
       return undefined;
     } else if (name === "init-url" && isString(newValue)) {
@@ -220,12 +239,18 @@ export class Shadow extends HTMLElement {
     }
   }
 
-  private _fetchJsonAndUpdate(urlOrPath: string | URL): Promise<void> {
+  /**
+   * Fetches a JSON object and assigns the object's properties to the element.
+   * @private
+   * @param {string | URL} urlOrPath
+   * @returns {Promise<void>}
+   */
+  _fetchJsonAndUpdate(urlOrPath) {
     return fetch(new URL(urlOrPath, location.href).href).then((res) => {
       if (isTrue(res.ok)) {
         return res.json().then((data) =>
           Object.entries(data).forEach(([property, value]) =>
-            (this as any)[property] = value
+            /**@type {any}*/ (this)[property] = value
           )
         );
       } else {
@@ -235,24 +260,30 @@ export class Shadow extends HTMLElement {
       }
     })
       .catch((err) => {
-        throw new ShadowError(err.message);
+        throw new ShadowError("init-url: " + err.message);
       });
   }
 
   /**
-   * Compares and reflects properties to attributes.
+   * Sets the value of the *camel-cased* property to the attribute's value with
+   * 'JSON.parse'.
+   * @param {string} name
+   * @param {Attribute} value
+   * @returns {void}
    */
-  update(name: string, value: Attribute): void {
+  update(name, value) {
     const property = convertDashToCamel(name);
     if (property in this) {
       if (
-        (this as any)[property] !== value &&
-        JSON.stringify((this as any)[property]) !== value
+        /**@type {any}*/ (this)[property] !== value &&
+          JSON.stringify(/**@type {any}*/ (this)[property]) !== value
       ) {
         try {
-          (this as any)[property] = isNull(value) ? value : JSON.parse(value);
+          /**@type {any}*/ (this)[property] = isNull(value)
+            ? value
+            : JSON.parse(value);
         } catch {
-          (this as any)[property] = value;
+          /**@type {any}*/ (this)[property] = value;
         }
       }
     } else {
@@ -263,23 +294,28 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * Adds CSS to the `shadowRoot` dynamically. Pass `false` as second argument if
+   * Adds CSS to the 'shadowRoot' dynamically. Pass 'false' as second argument if
    * you don't want this method to cause the custom element being rerendered.
+   * @param {string} ruleSet
+   * @returns {void}
    */
-  addCss(ruleSet: string, render = true): void {
+  addCss(ruleSet, render = true) {
     this._dynamicCssStore.push(createTemplate(`<style>${ruleSet}</style>`));
     if (isTrue(render) && isTrue(this._isReady)) this._actuallyRender();
   }
 
-  private _createFragment(
-    ...inputArray: AllowedExpressions[]
-  ): DocumentFragment {
+  /**
+   * @private
+   * @param {AllowedExpressions[]} inputArray
+   * @returns {DocumentFragment}
+   */
+  _createFragment(...inputArray) {
     const documentFragment = document.createDocumentFragment();
     inputArray.flat(2).forEach((input) => {
       if (isObject(input) && input.element instanceof Element) {
-        const { element, collection } = input as HReturn;
+        const { element, collection } = /**@type {HReturn}*/ (input);
         documentFragment.appendChild(element);
-        collection.forEach((item) => this._processCollection(item));
+        collection.forEach(this._processCollection);
       } else if (isString(input)) {
         // NOTE: Allows pure HTML strings without the usage of `htm`.
         documentFragment.appendChild(
@@ -294,9 +330,13 @@ export class Shadow extends HTMLElement {
     return documentFragment;
   }
 
-  _processCollection(
-    { target, queries, eventsAndListeners }: Collection[number],
-  ) {
+  /**
+   * Assign tagged 'HTMLElements' to the 'dom' property and add event listeners.
+   * @private
+   * @param {Collection[number]} collectionItem
+   * @returns {void}
+   */
+  _processCollection = ({ target, queries, eventsAndListeners }) => {
     if (isHtmlElement(target)) {
       queries.forEach(({ kind, selector }) =>
         kind === "id"
@@ -309,13 +349,15 @@ export class Shadow extends HTMLElement {
     eventsAndListeners.forEach(({ event, listener }) =>
       target.addEventListener(event, listener.bind(this))
     );
-  }
+  };
 
   /**
-   * Calls the method `this.render`, processes the return value and dispatches
-   * the event `_updated`.
+   * Calls the method 'this.render', processes the return value and invokes the
+   * methods 'updated' and 'firstUpdated'.
+   * @private
+   * @returns {void}
    */
-  private _actuallyRender(): void {
+  _actuallyRender() {
     if (this._renderCounter > 0) {
       this.dom.id = {};
       this.dom.class = {};
@@ -323,7 +365,7 @@ export class Shadow extends HTMLElement {
     while (this.root.firstChild) {
       this.root.removeChild(this.root.firstChild);
     }
-    (this.constructor as typeof Shadow).styles.forEach((template) =>
+    /**@type {typeof Shadow}*/ (this.constructor).styles.forEach((template) =>
       this.root.append(template.content.cloneNode(true))
     );
     const fragment = this._createFragment(this.render());
@@ -333,41 +375,40 @@ export class Shadow extends HTMLElement {
       );
     }
     this.root.prepend(fragment);
-    this.dispatchEvent(this._updateCustomEvent);
     this._renderCounter++;
+    if (this._renderCounter === 1) this.firstUpdated();
+    this.updated();
     // console.log(this.tagName, this._renderCounter);
   }
 
   /**
-   * Is called by the method `_actuallyRender` which renders the custom element.
-   * It must return the return type of the function `html` which is
-   * `AllowedExpressions`.
+   * Is called by the method '_actuallyRender' which renders the custom element.
+   * It must return the return type of the function 'html' which is
+   * 'AllowedExpressions'.
+   * @returns {AllowedExpressions}
    */
-  render(): AllowedExpressions {
+  render() {
     return "";
   }
 
   /**
    * A modifiable lifecycle callback which is called after the first update which
    * includes rendering.
+   * @returns {void}
    */
-  firstUpdated?(event: CustomEvent): void;
-
+  firstUpdated() {}
   /**
    * A modifiable lifecycle callback which is called after each update which
    * includes rendering.
+   * @returns {void}
    */
-  updated?(event: CustomEvent): void;
+  updated() {}
 
   /**
-   * Contains the return value of the function `css`, which is an array of
-   * HTMLTemplateElements containing `style` elements.
+   * Contains the return value of the function 'css', which is an array of
+   * HTMLTemplateElements containing 'style' elements.
+   * @static
+   * @type {HTMLTemplateElement[]}
    */
-  static styles: HTMLTemplateElement[] = [];
-
-  /**
-   * The decorator `customElement` sets this static property to the
-   * custom element's tag name automatically.
-   */
-  static is?: string;
+  static styles = [];
 }
