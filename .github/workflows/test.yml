@@ -2,9 +2,9 @@ name: ci
 
 on:
   push:
-    branches: [jsdoc]
+    branches: [main]
   pull_request:
-    branches: [jsdoc]
+    branches: [main]
 
 jobs:
   test:
