@@ -4,7 +4,7 @@ Shadow is a simple base class for creating fast, lightweight
 [Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components)
 with [htm](https://github.com/developit/htm).
 
-Written in JavaScript but _strictly typed_ with
+Written in JavaScript but **strictly typed** with
 [JSDoc](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html),
 you don't need any transpiler or other tools. Although
 [deno](https://deno.land/) would certainly make the development process a
