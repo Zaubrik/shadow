@@ -148,7 +148,7 @@ export class Shadow extends HTMLElement {
     this._accessorsStore.set(property, /**@type {any}*/ (this)[property]);
 
     if (isTrue(reflect)) {
-      this._updateAttribute(property, /**@type {any}*/ (this)[property]);
+      this._reflectToAttribute(property, /**@type {any}*/ (this)[property]);
     }
 
     Object.defineProperty(this, property, {
@@ -164,7 +164,7 @@ export class Shadow extends HTMLElement {
           this._waitingList.delete(property);
         }
         if (isTrue(reflect)) {
-          this._updateAttribute(property, value);
+          this._reflectToAttribute(property, value);
         }
         if (isTrue(render) && isTrue(this._isReady)) {
           this._actuallyRender();
@@ -174,13 +174,13 @@ export class Shadow extends HTMLElement {
   };
 
   /**
-   * Sets and removes attributes.
+   * Reflects a property's value to its attribute.
    * @private
    * @param {string} property
    * @param {unknown} value
    * @returns {void}
    */
-  _updateAttribute(property, value) {
+  _reflectToAttribute(property, value) {
     const attributeName = convertCamelToDash(property);
     const attributeValue = this.getAttribute(attributeName);
     if (attributeValue !== value) {
@@ -206,9 +206,9 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * A native custom elements' lifecycle callback. Whenever an attribute change
-   * fires this callback, 'Shadow' sets the property value from the observed
-   * attribute. The name of the attribute is the *dash-cased* property name.
+   * Whenever an attribute change fires this native lifecycle callback, 'Shadow'
+   * sets the property value from the observed attribute. The name of the
+   * attribute is the *dash-cased* property name.
    * If the special attribute 'init-url' has been set to a url or path, a JSON
    * object will be *fetched* and assigned to the custom element's properties.
    * @param {string} name
@@ -221,7 +221,7 @@ export class Shadow extends HTMLElement {
       return undefined;
     } else if (name === "init-url" && isString(newValue)) {
       this._isPaused = true;
-      this.update(name, newValue);
+      this._updateFromAttribute(name, newValue);
       this._fetchJsonAndUpdate(newValue)
         .then(() => {
           this._isPaused = false;
@@ -230,7 +230,7 @@ export class Shadow extends HTMLElement {
           }
         });
     } else {
-      return this.update(name, newValue);
+      return this._updateFromAttribute(name, newValue);
     }
   }
 
@@ -262,11 +262,12 @@ export class Shadow extends HTMLElement {
   /**
    * Sets the value of the *camel-cased* property to the attribute's value with
    * 'JSON.parse'.
+   * @private
    * @param {string} name
    * @param {Attribute} value
    * @returns {void}
    */
-  update(name, value) {
+  _updateFromAttribute(name, value) {
     const property = convertDashToCamel(name);
     if (property in this) {
       if (
@@ -402,7 +403,7 @@ export class Shadow extends HTMLElement {
   /**
    * You can pass the following options together with the properties:
    * 1. Setting 'reflect' to 'true' configures a property so that whenever it
-   * changes, its value is reflected to its observed attribute. (false)
+   * changes, its value is reflected to its corresponding attribute. (false)
    * 2. Setting 'render' to 'false' stops rerendering on property changes. (true)
    * 3. Wait for an assignment before rendering with the option 'wait'. (false)
    * 4. Assert with the option 'assert' if the input has a *truthy* value. (false)
