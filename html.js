@@ -1,4 +1,3 @@
-// @ts-check
 import htm from "./deps.js";
 import { isObject, stringify } from "./util.js";
 

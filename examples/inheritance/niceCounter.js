@@ -1,4 +1,3 @@
-// @ts-check
 import { SimpleCounter } from "./simpleCounter.js";
 import { css, html } from "../../mod.js";
 

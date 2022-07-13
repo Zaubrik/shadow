@@ -37,5 +37,5 @@ jobs:
         run: deno lint --unstable
 
       - name: Run Tests
-        run: deno bundle mod.js
+        run: deno check mod.js
 

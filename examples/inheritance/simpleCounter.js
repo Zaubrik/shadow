@@ -1,4 +1,3 @@
-// @ts-check
 import { css, Shadow } from "../../mod.js";
 
 export class SimpleCounter extends Shadow {
