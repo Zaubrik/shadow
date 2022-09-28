@@ -281,10 +281,6 @@ export class Shadow extends HTMLElement {
           /**@type {any}*/ (this)[property] = value;
         }
       }
-    } else {
-      throw new ShadowError(
-        `The property '${property}' does not exist on '${this.constructor.name}'.`,
-      );
     }
   }
 
