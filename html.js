@@ -1,4 +1,4 @@
-import htm from "./deps.js";
+import htm from "./third_party/htm_mini.js";
 import { isObject, stringify } from "./util.js";
 
 /**
@@ -131,5 +131,9 @@ export function h(type, props, ...children) {
  * will be added to the object 'this.dom' in the process.
  * It adds 'EventListeners' with 'addEventListener(event, listener.bind(this))',
  * so you don't need to use arrow functions anymore.
+ * @type{(
+ * strings: TemplateStringsArray,
+ * ...values: AllowedExpressions[]
+ * ) => AllowedExpressions}
  */
 export const html = htm.bind(h);
