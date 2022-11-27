@@ -242,19 +242,23 @@ export class Shadow extends HTMLElement {
   _fetchJsonAndUpdate(urlOrPath) {
     return fetch(new URL(urlOrPath, location.href).href).then((res) => {
       if (isTrue(res.ok)) {
-        return res.json().then((data) =>
-          Object.entries(data).forEach(([property, value]) =>
-            /**@type {any}*/ (this)[property] = value
-          )
-        );
+        return res.json().then((data) => {
+          if (isObject(data)) {
+            return Object.entries(data).forEach(([property, value]) =>
+              /**@type {any}*/ (this)[property] = value
+            );
+          } else {
+            throw new Error(`The fetched data is not a JSON object.`);
+          }
+        });
       } else {
-        throw new ShadowError(
+        throw new Error(
           `Received status code ${res.status} instead of 200-299 range.`,
         );
       }
     })
       .catch((err) => {
-        throw new ShadowError("init-url: " + err.message);
+        throw new ShadowError(err.message);
       });
   }
 
