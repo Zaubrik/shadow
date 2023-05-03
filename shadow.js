@@ -101,7 +101,8 @@ export class Shadow extends HTMLElement {
 
   /**
    * A native custom elements' lifecycle callback. It fires each time a custom
-   * element is appended into a *document-connected* element.
+   * element is appended into a *document-connected* element. Bear in mind that
+   * the elements are not rendered yet.
    * @returns {void}
    */
   connectedCallback() {
@@ -138,7 +139,9 @@ export class Shadow extends HTMLElement {
   ) => {
     if (isTrue(wait)) {
       this._waitingList.add(property);
-    } else if (isTrue(assert) && !/**@type {any}*/ (this)[property]) {
+    } else if (
+      isTrue(assert) && /**@type {any}*/ (this)[property] === undefined
+    ) {
       throw new ShadowError(
         `The property ${property} must have a truthy value.`,
       );
@@ -173,7 +176,9 @@ export class Shadow extends HTMLElement {
   };
 
   /**
-   * Reflects a property's value to its attribute.
+   * Reflects a property's value to its attribute. If reflect ´true´ only JSON
+   * values can be reflected to attributes. This means the property needs
+   * to be declared.
    * @private
    * @param {string} property
    * @param {unknown} value
@@ -192,8 +197,7 @@ export class Shadow extends HTMLElement {
           const jsonValue = JSON.stringify(value);
           if (jsonValue === undefined) {
             throw new ShadowError(
-              `Only JSON values can be reflected to attributes but received ` +
-                `the value '${value}' for '${property}'.`,
+              `The property '${property}' is not defined on the class.`,
             );
           }
           if (attributeValue !== jsonValue) {
@@ -264,7 +268,8 @@ export class Shadow extends HTMLElement {
 
   /**
    * Sets the value of the *camel-cased* property to the attribute's value with
-   * 'JSON.parse'.
+   * 'JSON.parse'. If the property exists only observed attributes
+   * (`observedAttributes`) will update properties.
    * @private
    * @param {string} name
    * @param {Attribute} value
@@ -400,9 +405,11 @@ export class Shadow extends HTMLElement {
   updated() {}
 
   /**
-   * You can pass the following options together with the properties:
+   * You can pass the following options. The specified properties are rerendered
+   * on new asignments:
    * 1. Setting 'reflect' to 'true' configures a property so that whenever it
-   * changes, its value is reflected to its corresponding attribute. (false)
+   * changes, its value is reflected to its corresponding attribute. Only JSON
+   * values can be reflected to attributes. (false)
    * 2. Setting 'render' to 'false' stops rerendering on property changes. (true)
    * 3. Wait for an assignment before rendering with the option 'wait'. (false)
    * 4. Assert with the option 'assert' if the input has a *truthy* value. (false)

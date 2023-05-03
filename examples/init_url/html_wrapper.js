@@ -1,6 +1,6 @@
 import { css, html, Shadow } from "../../mod.js";
 
-export class htmlWrapper extends Shadow {
+export class HtmlWrapper extends Shadow {
   initUrl = null;
   /** @type {string} */
   data = "";
@@ -22,4 +22,4 @@ export class htmlWrapper extends Shadow {
   }
 }
 
-window.customElements.define("html-wrapper", htmlWrapper);
+window.customElements.define("html-wrapper", HtmlWrapper);
