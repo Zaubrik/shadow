@@ -2,6 +2,7 @@ import {
   convertCamelToDash,
   convertDashToCamel,
   createTemplate,
+  isFalse,
   isHtmlElement,
   isNull,
   isObject,
@@ -9,6 +10,7 @@ import {
   isTrue,
   stringify,
 } from "./util.js";
+import { makeRpcCall } from "./deps.js";
 
 /**
  * @typedef {import('./html.js').AllowedExpressions} AllowedExpressions
@@ -24,6 +26,7 @@ import {
  * render?: boolean;
  * wait?: boolean;
  * assert?: boolean;
+ * rpc?: string;
  * }} PropertyOptions
  */
 
@@ -42,6 +45,9 @@ export class Shadow extends HTMLElement {
 
   /** @private */
   _waitingList = new Set();
+
+  /** @type{Record<string,ReturnType<typeof makeRpcCall>>} */
+  rpcData = {};
 
   /** @private */
   _accessorsStore = new Map();
@@ -102,7 +108,8 @@ export class Shadow extends HTMLElement {
   /**
    * A native custom elements' lifecycle callback. It fires each time a custom
    * element is appended into a *document-connected* element. Bear in mind that
-   * the elements are not rendered yet.
+   * the elements are not rendered yet. Overwriting this method
+   * requires invoking `super.connectedCallback()` inside of it.
    * @returns {void}
    */
   connectedCallback() {
@@ -134,10 +141,12 @@ export class Shadow extends HTMLElement {
   _makePropertyAccessible = (
     [
       property,
-      { reflect = false, render = true, wait = false, assert = false },
+      { reflect = false, render = true, wait = false, assert = false, rpc },
     ],
   ) => {
     if (isTrue(wait)) {
+      this._waitingList.add(property);
+    } else if (isString(rpc)) {
       this._waitingList.add(property);
     } else if (
       isTrue(assert) && /**@type {any}*/ (this)[property] === undefined
@@ -162,6 +171,10 @@ export class Shadow extends HTMLElement {
           );
         }
         this._accessorsStore.set(property, value);
+        if (isString(rpc)) {
+          this._waitingList.delete(property);
+          this._makeRpcCallAndRender(rpc, property);
+        }
         if (isTrue(wait)) {
           this._waitingList.delete(property);
         }
@@ -174,6 +187,25 @@ export class Shadow extends HTMLElement {
       },
     });
   };
+
+  /**
+   * Assigns the accessors to the declared properties, updates attributes and
+   * invokes rendering.
+   * @private
+   * @param {string} method
+   * @param {string} property
+   * @returns {void}
+   */
+  async _makeRpcCallAndRender(method, property) {
+    const url = this.getAttribute("rpc-url");
+    this.rpcData[method] = await makeRpcCall(
+      new URL(url, location.href).href,
+    )({
+      method,
+      params: /**@type {any}*/ (this)[property],
+    });
+    this._actuallyRender();
+  }
 
   /**
    * Reflects a property's value to its attribute. If reflect ´true´ only JSON
@@ -240,7 +272,7 @@ export class Shadow extends HTMLElement {
   /**
    * Fetches a JSON object and assigns the object's properties to the element.
    * @private
-   * @param {string | URL} urlOrPath
+   * @param {string} urlOrPath
    * @returns {Promise<void>}
    */
   _fetchJsonAndUpdate(urlOrPath) {
@@ -264,6 +296,22 @@ export class Shadow extends HTMLElement {
       .catch((err) => {
         throw new ShadowError(err.message);
       });
+  }
+
+  /**
+   * Fetches a JSON object and assigns the object's properties to the element.
+   * @private
+   * @param {any} rpcRequestInput
+   * @param {any} options
+   * @returns {Promise<any>}
+   */
+  async _makeRpcCall(rpcRequestInput, options = {}) {
+    const rpcUrl = this.getAttribute("rpc-url");
+    if (isString(rpcUrl)) {
+      return await makeRpcCall(rpcUrl)(rpcRequestInput, options);
+    } else {
+      throw new ShadowError("The element requires an 'rpc-url'.");
+    }
   }
 
   /**
