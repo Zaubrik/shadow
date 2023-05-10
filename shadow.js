@@ -2,7 +2,6 @@ import {
   convertCamelToDash,
   convertDashToCamel,
   createTemplate,
-  isFalse,
   isHtmlElement,
   isNull,
   isObject,
