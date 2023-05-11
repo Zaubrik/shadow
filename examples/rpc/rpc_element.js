@@ -18,10 +18,7 @@ export class RpcElement extends Shadow {
   static styles = css`
     :host {
       display: block;
-    }
-     
-    
-  `;
+    }`;
 
   render() {
     return html`<p>${this.rpcData.animalsMakeNoise}</p><p>${this.rpcData.makeName}</p>`;
