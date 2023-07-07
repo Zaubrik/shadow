@@ -1,5 +1,5 @@
 import htm from "./third_party/htm_mini.js";
-import { isObject, stringify } from "./util.js";
+import { isObject, isTemplate, stringify } from "./util.js";
 
 /**
  * @typedef {
@@ -105,7 +105,9 @@ export function h(type, props, ...children) {
     }, "");
   } else {
     for (const child of children.flat(2)) {
-      if (isHReturn(child)) {
+      if (isTemplate(child)) {
+        element.appendChild(child.content.cloneNode(true));
+      } else if (isHReturn(child)) {
         collection.push(...child.collection);
         element.appendChild(child.element);
       } else {

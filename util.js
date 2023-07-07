@@ -84,3 +84,12 @@ export function isObject(obj) {
 export function isHtmlElement(input) {
   return input instanceof HTMLElement;
 }
+
+/**
+ * isTemplate.
+ * @param {unknown} input
+ * @returns {input is HTMLTemplateElement}
+ */
+export function isTemplate(el) {
+  return el instanceof HTMLTemplateElement;
+}

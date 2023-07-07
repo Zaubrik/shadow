@@ -27,6 +27,10 @@ import { makeRpcCall } from "./deps.js";
  * assert?: boolean;
  * rpc?: string;
  * }} PropertyOptions
+ * @typedef {string | number | boolean | null} JsonPrimitive
+ * @typedef {JsonPrimitive | JsonObject | JsonArray} JsonValue
+ * @typedef {JsonValue[]} JsonArray
+ * @typedef {{ [member: string]: JsonValue }} JsonObject
  */
 
 /** @extends Error */
@@ -45,7 +49,13 @@ export class Shadow extends HTMLElement {
   /** @private */
   _waitingList = new Set();
 
-  /** @type{Record<string,ReturnType<typeof makeRpcCall>>} */
+  /** @type{HReturn} */
+  htmlResult = undefined;
+
+  /** @type{JsonValue} */
+  jsonData = {};
+
+  /** @type{Record<string, ReturnType<typeof makeRpcCall>>} */
   rpcData = {};
 
   /** @private */
@@ -66,8 +76,8 @@ export class Shadow extends HTMLElement {
   _isConnected = false;
 
   /**
-   * The initial rendering is delayed until the properties of the fetched JSON
-   * object have been assigned to the custom element's properties.
+   * The initial rendering is delayed until the fetched data object has been
+   * assigned to the custom element's properties.
    * @private
    */
   _isPaused = false;
@@ -146,12 +156,17 @@ export class Shadow extends HTMLElement {
     if (isTrue(wait)) {
       this._waitingList.add(property);
     } else if (isString(rpc)) {
+      if (!(/**@type {any}*/ property in this)) {
+        throw new ShadowError(
+          "The necessary property required as rpc argument is not a class member.",
+        );
+      }
       this._waitingList.add(property);
     } else if (
       isTrue(assert) && /**@type {any}*/ (this)[property] === undefined
     ) {
       throw new ShadowError(
-        `The property ${property} must have a truthy value.`,
+        `The property '${property}' must have a truthy value.`,
       );
     }
 
@@ -188,22 +203,54 @@ export class Shadow extends HTMLElement {
   };
 
   /**
+   * Fetches an object and assigns the data to the element.
+   * @private
+   * @param {"json-url" | "html-url" } name
+   * @param {string} urlOrPath
+   * @returns {Promise<void>}
+   */
+  _fetchAndUpdate(name, urlOrPath) {
+    return fetch(new URL(urlOrPath, location.href).href).then((res) => {
+      if (isTrue(res.ok)) {
+        return name === "json-url"
+          ? res.json().then((data) => {
+            return this.jsonData = data;
+          })
+          : res.text().then((data) => {
+            return this.htmlData = createTemplate(data);
+          });
+      } else {
+        throw new Error(
+          `Received status code ${res.status} instead of 200-299 range.`,
+        );
+      }
+    })
+      .catch((err) => {
+        throw new ShadowError(err.message);
+      });
+  }
+
+  /**
    * Assigns the accessors to the declared properties, updates attributes and
    * invokes rendering.
    * @private
    * @param {string} method
    * @param {string} property
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async _makeRpcCallAndRender(method, property) {
     const url = this.getAttribute("rpc-url");
-    this.rpcData[method] = await makeRpcCall(
-      new URL(url, location.href).href,
-    )({
-      method,
-      params: /**@type {any}*/ (this)[property],
-    });
-    this._actuallyRender();
+    if (isString(url)) {
+      this.rpcData[method] = await makeRpcCall(
+        new URL(url, location.href).href,
+      )({
+        method,
+        params: /**@type {any}*/ (this)[property],
+      });
+      this._actuallyRender();
+    } else {
+      throw new ShadowError("The element requires an 'rpc-url' attribute.");
+    }
   }
 
   /**
@@ -224,6 +271,11 @@ export class Shadow extends HTMLElement {
         if (isString(value)) {
           this.setAttribute(attributeName, value);
         } else {
+          if (!(property in this)) {
+            throw new ShadowError(
+              `The property '${property}' is not defined on the class.`,
+            );
+          }
           // NOTE: TypeScript uses an incorrect return type for `JSON.stringify`.
           const jsonValue = JSON.stringify(value);
           if (jsonValue === undefined) {
@@ -243,7 +295,7 @@ export class Shadow extends HTMLElement {
    * Whenever an attribute change fires this native lifecycle callback, 'Shadow'
    * sets the property value from the observed attribute. The name of the
    * attribute is the *dash-cased* property name.
-   * If the special attribute 'init-url' has been set to a url or path, a JSON
+   * If the special attribute 'json-url' has been set to a url or path, a JSON
    * object will be *fetched* and assigned to the custom element's properties.
    * @param {string} name
    * @param {Attribute} oldValue
@@ -253,10 +305,12 @@ export class Shadow extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (newValue === oldValue) {
       return undefined;
-    } else if (name === "init-url" && isString(newValue)) {
+    } else if (
+      (name === "json-url" || name === "html-url") && isString(newValue)
+    ) {
       this._isPaused = true;
       this._updateFromAttribute(name, newValue);
-      this._fetchJsonAndUpdate(newValue)
+      this._fetchAndUpdate(name, newValue)
         .then(() => {
           this._isPaused = false;
           if (isTrue(this._isReady)) {
@@ -265,51 +319,6 @@ export class Shadow extends HTMLElement {
         });
     } else {
       return this._updateFromAttribute(name, newValue);
-    }
-  }
-
-  /**
-   * Fetches a JSON object and assigns the object's properties to the element.
-   * @private
-   * @param {string} urlOrPath
-   * @returns {Promise<void>}
-   */
-  _fetchJsonAndUpdate(urlOrPath) {
-    return fetch(new URL(urlOrPath, location.href).href).then((res) => {
-      if (isTrue(res.ok)) {
-        return res.json().then((data) => {
-          if (isObject(data)) {
-            return Object.entries(data).forEach(([property, value]) =>
-              /**@type {any}*/ (this)[property] = value
-            );
-          } else {
-            throw new Error(`The fetched data is not a JSON object.`);
-          }
-        });
-      } else {
-        throw new Error(
-          `Received status code ${res.status} instead of 200-299 range.`,
-        );
-      }
-    })
-      .catch((err) => {
-        throw new ShadowError(err.message);
-      });
-  }
-
-  /**
-   * Fetches a JSON object and assigns the object's properties to the element.
-   * @private
-   * @param {any} rpcRequestInput
-   * @param {any} options
-   * @returns {Promise<any>}
-   */
-  async _makeRpcCall(rpcRequestInput, options = {}) {
-    const rpcUrl = this.getAttribute("rpc-url");
-    if (isString(rpcUrl)) {
-      return await makeRpcCall(rpcUrl)(rpcRequestInput, options);
-    } else {
-      throw new ShadowError("The element requires an 'rpc-url'.");
     }
   }
 
