@@ -37,12 +37,10 @@ import { css, html, Shadow } from "https://deno.land/x/shadow/mod.js";
 
 export class MyElement extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
-  initUrl = null;
+  jsonUrl = null;
   h1Content = 0;
   firstContent = null;
   secondContent = null;
-  /** @type {string[]} */
-  items = [];
   anchorAttributes = {};
 
   static properties = {
@@ -51,7 +49,7 @@ export class MyElement extends Shadow {
     anchorAttributes: {},
   };
 
-  static observedAttributes = ["init-url", "first-content"];
+  static observedAttributes = ["json-url", "first-content"];
 
   static styles = css`
     :host {
@@ -84,7 +82,9 @@ export class MyElement extends Shadow {
       <p class="text">${this.firstContent}</p>
       <p class="text">${this.secondContent}</p>
       <ul>
-        ${this.items.map((item) => html`<li @class="myLi">${item}</li>`)}
+        ${
+      this.jsonData.items.map((item) => html`<li @class="myLi">${item}</li>`)
+    }
       </ul>
       <p class="text"><a ...${this.anchorAttributes}>Anchor Text</a></p>`;
   }
