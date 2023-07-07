@@ -90,6 +90,6 @@ export function isHtmlElement(input) {
  * @param {unknown} input
  * @returns {input is HTMLTemplateElement}
  */
-export function isTemplate(el) {
-  return el instanceof HTMLTemplateElement;
+export function isTemplate(input) {
+  return input instanceof HTMLTemplateElement;
 }

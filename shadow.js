@@ -49,11 +49,11 @@ export class Shadow extends HTMLElement {
   /** @private */
   _waitingList = new Set();
 
-  /** @type{HReturn} */
-  htmlResult = undefined;
+  /** @type{HTMLTemplateElement | null} */
+  htmlResult = null;
 
   /** @type{JsonValue} */
-  jsonData = {};
+  jsonData = null;
 
   /** @type{Record<string, ReturnType<typeof makeRpcCall>>} */
   rpcData = {};
