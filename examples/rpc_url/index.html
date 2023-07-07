@@ -8,12 +8,12 @@
   </head>
   <body>
     <section>
-      <rpc-element rpc-url="http://localhost:8080"></rpc-element>
+      <rpc-element rpc-url="http://localhost:8000"></rpc-element>
     </section>
     <script type="module">
-      const wrapper = document.querySelector("rpc-element")
-      wrapper.text = ["wuff", "muuuh"]
-      wrapper.name = { firstName: "Joe", lastName: "Doe" }
+      const rpcElement = document.querySelector("rpc-element")
+      rpcElement.text = ["wuff", "muuuh"]
+      rpcElement.name = { firstName: "Joe", lastName: "Doe" }
     </script>
   </body>
 </html>
