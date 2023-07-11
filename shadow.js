@@ -52,8 +52,8 @@ export class Shadow extends HTMLElement {
   /** @type{HTMLTemplateElement | null} */
   htmlResult = null;
 
-  /** @type{JsonValue} */
-  jsonData = null;
+  /** @type{JsonObject} */
+  jsonData = {};
 
   /** @type{Record<string, JsonObject>} */
   rpcData = {};
@@ -207,15 +207,22 @@ export class Shadow extends HTMLElement {
    * @private
    * @param {"json-url" | "html-url" } name
    * @param {string} urlOrPath
-   * @returns {Promise<void>}
+   * @returns {Promise<JsonObject | HTMLTemplateElement>}
    */
   async _fetchAndUpdate(name, urlOrPath) {
     try {
       const response = await fetch(new URL(urlOrPath, location.href).href);
       if (isTrue(response.ok)) {
-        return name === "json-url"
-          ? this.jsonData = await response.json()
-          : this.htmlData = createTemplate(await response.text());
+        if (name === "json-url") {
+          const jsonResult = await response.json();
+          if (isObject(jsonResult)) {
+            return this.jsonData = /**@type {JsonObject}*/ (jsonResult);
+          } else {
+            throw new Error("The json data is not an object.");
+          }
+        } else {
+          return this.htmlData = createTemplate(await response.text());
+        }
       } else {
         throw new Error(
           `Received status code ${response.status} instead of 200-299 range.`,
@@ -241,7 +248,9 @@ export class Shadow extends HTMLElement {
         const result = await makeRpcCall(
           new URL(url, location.href).href,
         )({ method, params: /**@type {any}*/ (this)[property] });
-        if (!isObject(result)) {
+        if (isObject(result)) {
+          this.rpcData[method] = /**@type {JsonObject}*/ (result);
+        } else {
           throw new Error("The rpc result is not an object.");
         }
       } catch (error) {

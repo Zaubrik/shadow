@@ -48,7 +48,9 @@ export class MyElement extends Shadow {
       <p class="text">${this.secondContent}</p>
       <ul>
         ${
-      this.jsonData.items.map((item) => html`<li @class="myLi">${item}</li>`)
+      /**@type {string[]}*/ (this.jsonData.items).map((item) =>
+        html`<li @class="myLi">${item}</li>`
+      )
     }
       </ul>
       <p class="text"><a ...${this.anchorAttributes}>Anchor Text</a></p>`;

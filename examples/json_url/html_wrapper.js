@@ -1,6 +1,8 @@
 import { css, html, Shadow } from "../../mod.js";
 
 export class HtmlWrapper extends Shadow {
+  /**@type {{items: string[]}}*/
+  jsonData = { items: [] };
   static observedAttributes = ["json-url"];
 
   static styles = css`
@@ -11,7 +13,7 @@ export class HtmlWrapper extends Shadow {
 
   render() {
     return html`<ul>
-      ${this.jsonData.map((data) => html`<li>${data}</li>`)}
+      ${this.jsonData.items.map((data) => html`<li>${data}</li>`)}
     </ul>`;
   }
 }
