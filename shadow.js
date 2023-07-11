@@ -55,7 +55,7 @@ export class Shadow extends HTMLElement {
   /** @type{JsonValue} */
   jsonData = null;
 
-  /** @type{Record<string, ReturnType<typeof makeRpcCall>>} */
+  /** @type{Record<string, JsonObject>} */
   rpcData = {};
 
   /** @private */
@@ -153,14 +153,14 @@ export class Shadow extends HTMLElement {
       { reflect = false, render = true, wait = false, assert = false, rpc },
     ],
   ) => {
-    if (isTrue(wait)) {
-      this._waitingList.add(property);
-    } else if (isString(rpc)) {
+    if (isString(rpc)) {
       if (!(/**@type {any}*/ property in this)) {
         throw new ShadowError(
           "The necessary property required as rpc argument is not a class member.",
         );
       }
+      this._waitingList.add(property);
+    } else if (isTrue(wait)) {
       this._waitingList.add(property);
     } else if (
       isTrue(assert) && /**@type {any}*/ (this)[property] === undefined
@@ -209,25 +209,21 @@ export class Shadow extends HTMLElement {
    * @param {string} urlOrPath
    * @returns {Promise<void>}
    */
-  _fetchAndUpdate(name, urlOrPath) {
-    return fetch(new URL(urlOrPath, location.href).href).then((res) => {
-      if (isTrue(res.ok)) {
+  async _fetchAndUpdate(name, urlOrPath) {
+    try {
+      const response = await fetch(new URL(urlOrPath, location.href).href);
+      if (isTrue(response.ok)) {
         return name === "json-url"
-          ? res.json().then((data) => {
-            return this.jsonData = data;
-          })
-          : res.text().then((data) => {
-            return this.htmlData = createTemplate(data);
-          });
+          ? this.jsonData = await response.json()
+          : this.htmlData = createTemplate(await response.text());
       } else {
         throw new Error(
-          `Received status code ${res.status} instead of 200-299 range.`,
+          `Received status code ${response.status} instead of 200-299 range.`,
         );
       }
-    })
-      .catch((err) => {
-        throw new ShadowError(err.message);
-      });
+    } catch (error) {
+      throw new ShadowError(error.message);
+    }
   }
 
   /**
@@ -241,12 +237,16 @@ export class Shadow extends HTMLElement {
   async _makeRpcCallAndRender(method, property) {
     const url = this.getAttribute("rpc-url");
     if (isString(url)) {
-      this.rpcData[method] = await makeRpcCall(
-        new URL(url, location.href).href,
-      )({
-        method,
-        params: /**@type {any}*/ (this)[property],
-      });
+      try {
+        const result = await makeRpcCall(
+          new URL(url, location.href).href,
+        )({ method, params: /**@type {any}*/ (this)[property] });
+        if (!isObject(result)) {
+          throw new Error("The rpc result is not an object.");
+        }
+      } catch (error) {
+        throw new ShadowError(error.message);
+      }
       this._actuallyRender();
     } else {
       throw new ShadowError("The element requires an 'rpc-url' attribute.");
