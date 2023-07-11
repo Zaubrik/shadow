@@ -6,10 +6,7 @@ export class HtmlWrapper extends Shadow {
   static styles = css`
     :host {
       display: block;
-    }
-     
-    
-  `;
+    }`;
 
   render() {
     return html`<slot>${this.htmlData}</slot>`;
