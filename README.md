@@ -112,7 +112,7 @@ window.customElements.define("my-element", MyElement);
 ## Discord
 
 Feel free to ask questions and start discussions in our
-[discord server](https://discord.gg/M9czFXrX).
+[discord server](https://discord.gg/6spYphKXAt).
 
 ## Contribution
 
