@@ -109,6 +109,11 @@ export class MyElement extends Shadow {
 window.customElements.define("my-element", MyElement);
 ```
 
+## Discord
+
+Feel free to ask questions and start discussions in our
+[discord server](https://discord.gg/M9czFXrX).
+
 ## Contribution
 
 We welcome and appreciate all contributions to shadow.
