@@ -27,13 +27,13 @@ deno check ./examples/showcase/my_element.js
 #### Print the documented API
 
 ```bash
-deno doc https://deno.land/x/shadow/mod.js
+deno doc https://dev.zaubrik.com/shadow/mod.js
 ```
 
 ## Example
 
 ```javascript
-import { css, html, Shadow } from "https://deno.land/x/shadow/mod.js";
+import { css, html, Shadow } from "../../mod.js";
 
 export class MyElement extends Shadow {
   colors = ["yellow", "green", "pink", "red", "blue", "orange"];
