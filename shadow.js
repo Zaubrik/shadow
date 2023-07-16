@@ -49,8 +49,8 @@ export class Shadow extends HTMLElement {
   /** @private */
   _waitingList = new Set();
 
-  /** @type{HTMLTemplateElement | null} */
-  htmlResult = null;
+  /** @type{HTMLTemplateElement} */
+  htmlData = createTemplate("");
 
   /** @type{JsonObject} */
   jsonData = {};
