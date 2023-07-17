@@ -205,7 +205,7 @@ export class Shadow extends HTMLElement {
   /**
    * Fetches an object and assigns the data to the element.
    * @private
-   * @param {"json-url" | "html-url" } name
+   * @param {"json-url" | "html-url" | "init-url" } name
    * @param {string} urlOrPath
    * @returns {Promise<JsonObject | HTMLTemplateElement>}
    */
@@ -213,10 +213,15 @@ export class Shadow extends HTMLElement {
     try {
       const response = await fetch(new URL(urlOrPath, location.href).href);
       if (isTrue(response.ok)) {
-        if (name === "json-url") {
-          const jsonResult = await response.json();
+        if (name === "json-url" || name === "init-url") {
+          const jsonResult = /**@type {JsonObject}*/ (await response.json());
           if (isObject(jsonResult)) {
-            return this.jsonData = /**@type {JsonObject}*/ (jsonResult);
+            name === "json-url"
+              ? this.jsonData = jsonResult
+              : Object.entries(jsonResult).forEach(([property, value]) =>
+                /**@type {any}*/ (this)[property] = value
+              );
+            return jsonResult;
           } else {
             throw new Error("The json data is not an object.");
           }
@@ -304,8 +309,9 @@ export class Shadow extends HTMLElement {
    * Whenever an attribute change fires this native lifecycle callback, 'Shadow'
    * sets the property value from the observed attribute. The name of the
    * attribute is the *dash-cased* property name.
-   * If the special attribute 'json-url' has been set to a url or path, a JSON
-   * object will be *fetched* and assigned to the custom element's properties.
+   * If one of the special attributes 'json-url', 'html-url' or 'init-url' has
+   * been set to a url or path, the data will be fetched and assigned
+   * accordingly.
    * @param {string} name
    * @param {Attribute} oldValue
    * @param {Attribute} newValue
@@ -315,7 +321,8 @@ export class Shadow extends HTMLElement {
     if (newValue === oldValue) {
       return undefined;
     } else if (
-      (name === "json-url" || name === "html-url") && isString(newValue)
+      (name === "json-url" || name === "html-url" || name === "init-url") &&
+      isString(newValue)
     ) {
       this._isPaused = true;
       this._updateFromAttribute(name, newValue);
