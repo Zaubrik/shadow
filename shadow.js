@@ -285,8 +285,8 @@ export class Shadow extends HTMLElement {
   async _makeRpcCallAndRender(method, property) {
     const urlOrPath = this.getAttribute("rpc-url");
     if (isString(urlOrPath)) {
+      const [url, jwt] = this._getUrlAndJwt(urlOrPath);
       try {
-        const [url, jwt] = this._getUrlAndJwt(urlOrPath);
         const result = await makeRpcCall(url)(
           { method, params: /**@type {any}*/ (this)[property] },
           isNull(jwt) ? undefined : { jwt },
