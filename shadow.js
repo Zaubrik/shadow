@@ -220,7 +220,7 @@ export class Shadow extends HTMLElement {
    */
   _getUrlAndJwt(urlOrPath) {
     const hasJwtEnabled = urlOrPath.startsWith("@jwt:");
-    const jwtOrNull = hasJwtEnabled ? window.localStorage.getItem("jwt") : null;
+    const jwtOrNull = hasJwtEnabled ? getJwt("jwt") : null;
     const realUrlOrPath = hasJwtEnabled ? urlOrPath.slice(5) : urlOrPath;
     const url = new URL(realUrlOrPath, location.href).href;
     if (hasJwtEnabled && isNull(jwtOrNull)) {
