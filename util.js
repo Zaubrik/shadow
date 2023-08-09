@@ -54,6 +54,14 @@ export function isNull(input) {
 
 /**
  * @param {unknown} input
+ * @returns {boolean}
+ */
+export function isNotNull(input) {
+  return input !== null;
+}
+
+/**
+ * @param {unknown} input
  * @returns {input is true}
  */
 export function isTrue(input) {
@@ -92,4 +100,29 @@ export function isHtmlElement(input) {
  */
 export function isTemplate(input) {
   return input instanceof HTMLTemplateElement;
+}
+
+/**
+ * removeJwt.
+ *
+ * @param {string} keyName
+ */
+export function removeJwt(keyName) {
+  window.localStorage.removeItem(keyName);
+}
+
+/**
+ * getJwt.
+ *
+ * @param {string} keyName
+ */
+export function getJwt(keyName) {
+  return window.localStorage.getItem(keyName);
+}
+
+/**
+ * goHome.
+ */
+export function goHome() {
+  window.location.href = window.location.origin;
 }

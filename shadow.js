@@ -2,11 +2,15 @@ import {
   convertCamelToDash,
   convertDashToCamel,
   createTemplate,
+  getJwt,
+  goHome,
   isHtmlElement,
+  isNotNull,
   isNull,
   isObject,
   isString,
   isTrue,
+  removeJwt,
   stringify,
 } from "./util.js";
 import { makeRpcCall } from "./deps.js";
@@ -52,11 +56,17 @@ export class Shadow extends HTMLElement {
   /** @type{HTMLTemplateElement} */
   htmlData = createTemplate("");
 
-  /** @type{JsonObject} */
-  jsonData = {};
+  /** @type{JsonValue} */
+  jsonData = null;
 
   /** @type{Record<string, JsonObject>} */
   rpcData = {};
+
+  /**
+   * The key name where the jwt is stored in the local storage.
+   * @private
+   */
+  _jwtKeyName = "jwt";
 
   /** @private */
   _accessorsStore = new Map();
@@ -203,31 +213,57 @@ export class Shadow extends HTMLElement {
   };
 
   /**
+   * Gets the url and the jwt from the special url or path.
+   * @private
+   * @param {string} urlOrPath
+   * @returns {[string, string | null ]}
+   */
+  _getUrlAndJwt(urlOrPath) {
+    const hasJwtEnabled = urlOrPath.startsWith("@jwt:");
+    const jwtOrNull = hasJwtEnabled ? window.localStorage.getItem("jwt") : null;
+    const realUrlOrPath = hasJwtEnabled ? urlOrPath.slice(5) : urlOrPath;
+    const url = new URL(realUrlOrPath, location.href).href;
+    if (hasJwtEnabled && isNull(jwtOrNull)) {
+      console.error(`No jwt has been stored.`);
+      goHome();
+    }
+    return [url, jwtOrNull];
+  }
+
+  /**
    * Fetches an object and assigns the data to the element.
    * @private
    * @param {"json-url" | "html-url" | "init-url" } name
    * @param {string} urlOrPath
-   * @returns {Promise<JsonObject | HTMLTemplateElement>}
    */
   async _fetchAndUpdate(name, urlOrPath) {
     try {
-      const response = await fetch(new URL(urlOrPath, location.href).href);
+      const [url, jwt] = this._getUrlAndJwt(urlOrPath);
+      const request = new Request(url);
+      if (jwt) {
+        request.headers.set("Authorization", `Bearer ${jwt}`);
+      }
+      const response = await fetch(request);
       if (isTrue(response.ok)) {
         if (name === "json-url" || name === "init-url") {
           const jsonResult = /**@type {JsonObject}*/ (await response.json());
-          if (isObject(jsonResult)) {
+          if (name === "init-url" && !isObject(jsonResult)) {
+            throw new Error("The json data is not an object.");
+          } else {
             name === "json-url"
               ? this.jsonData = jsonResult
               : Object.entries(jsonResult).forEach(([property, value]) =>
                 /**@type {any}*/ (this)[property] = value
               );
             return jsonResult;
-          } else {
-            throw new Error("The json data is not an object.");
           }
         } else {
           return this.htmlData = createTemplate(await response.text());
         }
+      } else if (response.status === 401 && isNotNull(jwt)) {
+        console.error(`Received status code ${response.status}.`);
+        removeJwt(this._jwtKeyName);
+        goHome();
       } else {
         throw new Error(
           `Received status code ${response.status} instead of 200-299 range.`,
@@ -247,19 +283,27 @@ export class Shadow extends HTMLElement {
    * @returns {Promise<void>}
    */
   async _makeRpcCallAndRender(method, property) {
-    const url = this.getAttribute("rpc-url");
-    if (isString(url)) {
+    const urlOrPath = this.getAttribute("rpc-url");
+    if (isString(urlOrPath)) {
       try {
-        const result = await makeRpcCall(
-          new URL(url, location.href).href,
-        )({ method, params: /**@type {any}*/ (this)[property] });
+        const [url, jwt] = this._getUrlAndJwt(urlOrPath);
+        const result = await makeRpcCall(url)(
+          { method, params: /**@type {any}*/ (this)[property] },
+          isNull(jwt) ? undefined : { jwt },
+        );
         if (isObject(result)) {
           this.rpcData[method] = /**@type {JsonObject}*/ (result);
         } else {
           throw new Error("The rpc result is not an object.");
         }
       } catch (error) {
-        throw new ShadowError(error.message);
+        if (isString(jwt)) {
+          console.error(`Received rpc error code ${error?.code}.`);
+          removeJwt(this._jwtKeyName);
+          goHome();
+        } else {
+          throw new ShadowError(error.message);
+        }
       }
       this._actuallyRender();
     } else {
