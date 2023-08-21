@@ -291,9 +291,10 @@ export class Shadow extends HTMLElement {
    * @returns {Promise<void>}
    */
   async _makeRpcCallAndRender(method, property) {
-    const urlOrPath = this.getAttribute("dev-url") && this._isDevelopment
-      ? this.getAttribute("dev-url")
-      : this.getAttribute("rpc-url");
+    const urlOrPath =
+      isString(this.getAttribute("dev-url")) && this._isDevelopment
+        ? this.getAttribute("dev-url")
+        : this.getAttribute("rpc-url");
     if (isString(urlOrPath)) {
       const [url, jwt] = this._getUrlAndJwt(urlOrPath);
       try {
@@ -378,7 +379,7 @@ export class Shadow extends HTMLElement {
       (name === "json-url" || name === "html-url" || name === "init-url") &&
       isString(newValue)
     ) {
-      if (this.getAttribute("dev-url") && this._isDevelopment) {
+      if (isString(this.getAttribute("dev-url")) && this._isDevelopment) {
         newValue = this.getAttribute("dev-url");
       }
       this._isPaused = true;
