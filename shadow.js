@@ -309,7 +309,10 @@ export class Shadow extends HTMLElement {
         }
       } catch (error) {
         if (isString(jwt)) {
-          console.error(`Received rpc error code ${error?.code}.`);
+          console.error(
+            `Received rpc error code ${error?.code} (${error?.message}).`,
+          );
+          if (error?.data) console.error(error.data);
           removeJwt(this._jwtKeyName);
           goHome();
         } else {
