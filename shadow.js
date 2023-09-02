@@ -313,7 +313,7 @@ export class Shadow extends HTMLElement {
           goHome();
         }
         const errorMessage =
-          `Received rpc error code ${error?.code} (${error?.message})${
+          `Received rpc error code ${error?.code} with the message: "${error?.message}"${
             error?.data ? ":\n" + error.data : "."
           }`;
         throw new ShadowError(errorMessage);
