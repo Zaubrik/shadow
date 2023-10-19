@@ -4,7 +4,6 @@ import {
   createTemplate,
   getJwt,
   isHtmlElement,
-  isNotNull,
   isNull,
   isObject,
   isString,
