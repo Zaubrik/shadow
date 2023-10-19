@@ -94,7 +94,6 @@ export function isHtmlElement(input) {
 }
 
 /**
- * isTemplate.
  * @param {unknown} input
  * @returns {input is HTMLTemplateElement}
  */
@@ -103,26 +102,9 @@ export function isTemplate(input) {
 }
 
 /**
- * removeJwt.
- *
  * @param {string} keyName
- */
-export function removeJwt(keyName) {
-  window.localStorage.removeItem(keyName);
-}
-
-/**
- * getJwt.
- *
- * @param {string} keyName
+ * @returns {string | null }
  */
 export function getJwt(keyName) {
   return window.localStorage.getItem(keyName);
-}
-
-/**
- * goHome.
- */
-export function goHome() {
-  window.location.href = window.location.origin;
 }

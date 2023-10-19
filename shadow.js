@@ -3,14 +3,12 @@ import {
   convertDashToCamel,
   createTemplate,
   getJwt,
-  goHome,
   isHtmlElement,
   isNotNull,
   isNull,
   isObject,
   isString,
   isTrue,
-  removeJwt,
   stringify,
 } from "./util.js";
 import { makeRpcCall } from "./deps.js";
@@ -231,9 +229,8 @@ export class Shadow extends HTMLElement {
     const jwtOrNull = hasJwtEnabled ? getJwt("jwt") : null;
     const realUrlOrPath = hasJwtEnabled ? urlOrPath.slice(5) : urlOrPath;
     const url = new URL(realUrlOrPath, location.href).href;
-    if (hasJwtEnabled && isNull(jwtOrNull)) {
-      console.error(`No jwt has been stored.`);
-      goHome();
+    if (hasJwtEnabled && !isString(jwtOrNull)) {
+      throw new Error(`The required jwt could not be found.`);
     }
     return [url, jwtOrNull];
   }
@@ -268,14 +265,15 @@ export class Shadow extends HTMLElement {
         } else {
           return this.htmlData = createTemplate(await response.text());
         }
-      } else if (response.status === 401 && isNotNull(jwt)) {
-        console.error(`Received status code ${response.status}.`);
-        removeJwt(this._jwtKeyName);
-        goHome();
       } else {
-        throw new Error(
-          `Received status code ${response.status} instead of 200-299 range.`,
+        this.dispatchEvent(
+          new CustomEvent("fetchError", {
+            bubbles: true,
+            composed: true,
+            detail: { response },
+          }),
         );
+        throw new Error(`Received http status code ${response.status}.`);
       }
     } catch (error) {
       throw new ShadowError(error.message);
@@ -296,8 +294,8 @@ export class Shadow extends HTMLElement {
       ? devUrlOrNull
       : this.getAttribute("rpc-url");
     if (isString(urlOrPath)) {
-      const [url, jwt] = this._getUrlAndJwt(urlOrPath);
       try {
+        const [url, jwt] = this._getUrlAndJwt(urlOrPath);
         const result = await makeRpcCall(url)(
           { method, params: /**@type {any}*/ (this)[property] },
           isNull(jwt) ? undefined : { jwt },
@@ -307,14 +305,17 @@ export class Shadow extends HTMLElement {
         } else {
           throw new Error("The rpc result is not an object.");
         }
-      } catch (error) {
-        if (isString(jwt)) {
-          removeJwt(this._jwtKeyName);
-          goHome();
-        }
+      } catch (rpcError) {
+        this.dispatchEvent(
+          new CustomEvent("rpcError", {
+            bubbles: true,
+            composed: true,
+            detail: { rpcError },
+          }),
+        );
         const errorMessage =
-          `Received rpc error code ${error?.code} with the message: "${error?.message}"${
-            error?.data ? ":\n" + error.data : "."
+          `Received rpc error code ${rpcError?.code} with the message: "${rpcError?.message}"${
+            rpcError?.data ? ":\n" + rpcError.data : "."
           }`;
         throw new ShadowError(errorMessage);
       }
