@@ -375,9 +375,8 @@ export class Shadow extends HTMLElement {
    * @returns {void}
    */
   attributeChangedCallback(name, oldValue, newValue) {
-    if (newValue === oldValue) {
-      return undefined;
-    } else if (
+    // This condition must be first to allow following fetch requests.
+    if (
       (name === "json-url" || name === "html-url" || name === "init-url") &&
       isString(newValue)
     ) {
@@ -394,6 +393,8 @@ export class Shadow extends HTMLElement {
             this._actuallyRender();
           }
         });
+    } else if (newValue === oldValue) {
+      return undefined;
     } else {
       return this._updateFromAttribute(name, newValue);
     }
