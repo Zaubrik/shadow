@@ -304,17 +304,17 @@ export class Shadow extends HTMLElement {
         } else {
           throw new Error("The rpc result is not an object.");
         }
-      } catch (rpcError) {
+      } catch (error) {
         this.dispatchEvent(
-          new CustomEvent("rpcError", {
+          new CustomEvent("error", {
             bubbles: true,
             composed: true,
-            detail: { rpcError },
+            detail: { error },
           }),
         );
         const errorMessage =
-          `Received rpc error code ${rpcError?.code} with the message: "${rpcError?.message}"${
-            rpcError?.data ? ":\n" + rpcError.data : "."
+          `Received rpc error code ${error?.code} with the message: "${error?.message}"${
+            error?.data ? ":\n" + error.data : "."
           }`;
         throw new ShadowError(errorMessage);
       }
