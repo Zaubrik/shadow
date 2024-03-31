@@ -109,6 +109,45 @@ export class MyElement extends Shadow {
 window.customElements.define("my-element", MyElement);
 ```
 
+## Attributes and Properties
+
+### Attributes
+
+- You can freely add and set attributes with the type `string | null`.
+- Changing an attribute alone does **not** cause a **rerendering** of the custom
+  element.
+- If you add an attribute to `observedAttributes`, `Shadow` assigns the observed
+  attribute's value to the element's property.
+  - The property must be defined on the class. Otherwise the property is
+    ignored.
+  - The property name is the _camel-cased_ attribute name.
+
+### Properties
+
+You can freely define properties on your class. But you can also specify
+properties which cause a **rerendering** of the custom element on new asignments
+with:
+
+```ts
+static properties = { <propertyName> : {
+reflect?: boolean,
+render?: boolean,
+wait?: boolean,
+assert?: boolean,
+rpc?: string
+}}
+```
+
+You can pass the following options:
+
+1. Setting 'reflect' to 'true' configures a property so that whenever it
+   changes, its value is reflected to its corresponding attribute. Only JSON
+   values can be reflected to attributes. (false)
+2. Setting 'render' to 'false' stops rerendering on property changes. (true)
+3. Wait for an assignment before rendering with the option 'wait'. (false)
+4. Assert with the option 'assert' if the input has a _truthy_ value. (false)
+5. Sets the RPC method name with `rpc`.
+
 ## Discord
 
 Feel free to ask questions and start discussions in our

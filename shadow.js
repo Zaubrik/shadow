@@ -168,12 +168,12 @@ export class Shadow extends HTMLElement {
       { reflect = false, render = true, wait = false, assert = false, rpc },
     ],
   ) => {
+    if (!(/**@type {any}*/ property in this)) {
+      throw new ShadowError(
+        `The property '${property}' is not a class member.`,
+      );
+    }
     if (isString(rpc)) {
-      if (!(/**@type {any}*/ property in this)) {
-        throw new ShadowError(
-          "The necessary property required as rpc argument is not a class member.",
-        );
-      }
       this._waitingList.add(property);
     } else if (isTrue(wait)) {
       this._waitingList.add(property);
@@ -190,7 +190,6 @@ export class Shadow extends HTMLElement {
     if (isTrue(reflect)) {
       this._reflectToAttribute(property, /**@type {any}*/ (this)[property]);
     }
-
     Object.defineProperty(this, property, {
       get: () => this._accessorsStore.get(property),
       set: (value) => {
@@ -325,9 +324,9 @@ export class Shadow extends HTMLElement {
   }
 
   /**
-   * Reflects a property's value to its attribute. If reflect ´true´ only JSON
-   * values can be reflected to attributes. This means the property needs
-   * to be declared.
+   * Reflects a property's value to its attribute. If 'reflect' is ´true´,
+   * only JSON values can be reflected to attributes.
+   * This means the property needs to be declared.
    * @private
    * @param {string} property
    * @param {unknown} value
@@ -364,8 +363,8 @@ export class Shadow extends HTMLElement {
 
   /**
    * Whenever an attribute change fires this native lifecycle callback, 'Shadow'
-   * sets the property value from the observed attribute. The name of the
-   * attribute is the *dash-cased* property name.
+   * assigns the observed attribute' value to the element's property. The name
+   * of the attribute is the *dash-cased* property name.
    * If one of the special attributes 'json-url', 'html-url' or 'init-url' has
    * been set to a url or path, the data will be fetched and assigned
    * accordingly.
@@ -402,8 +401,8 @@ export class Shadow extends HTMLElement {
 
   /**
    * Sets the value of the *camel-cased* property to the attribute's value with
-   * 'JSON.parse'. If the property exists only observed attributes
-   * (`observedAttributes`) will update properties.
+   * 'JSON.parse'. The property must exist on the class and only observed
+   * attributes (`observedAttributes`) will update properties.
    * @private
    * @param {string} name
    * @param {Attribute} value
@@ -539,14 +538,16 @@ export class Shadow extends HTMLElement {
   updated() {}
 
   /**
-   * You can pass the following options. The specified properties are rerendered
-   * on new asignments:
+   * You can specify properties which cause a rerendering of the custom
+   * element on new asignments.
+   * You can pass the following options:
    * 1. Setting 'reflect' to 'true' configures a property so that whenever it
    * changes, its value is reflected to its corresponding attribute. Only JSON
    * values can be reflected to attributes. (false)
    * 2. Setting 'render' to 'false' stops rerendering on property changes. (true)
    * 3. Wait for an assignment before rendering with the option 'wait'. (false)
    * 4. Assert with the option 'assert' if the input has a *truthy* value. (false)
+   * 5. Sets the RPC method name wit `rpc`.
    * @static
    * @type {Record<string, PropertyOptions>}
    */
