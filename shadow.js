@@ -3,6 +3,7 @@ import {
   convertDashToCamel,
   createTemplate,
   getJwt,
+  isArray,
   isHtmlElement,
   isNull,
   isObject,
@@ -56,7 +57,7 @@ export class Shadow extends HTMLElement {
   /** @type{JsonValue} */
   jsonData = null;
 
-  /** @type{Record<string, JsonObject>} */
+  /** @type{JsonObject | JsonArray } */
   rpcData = {};
 
   /**
@@ -298,7 +299,7 @@ export class Shadow extends HTMLElement {
           { method, params: /**@type {any}*/ (this)[property] },
           isNull(jwt) ? undefined : { jwt },
         );
-        if (isObject(result)) {
+        if (isObject(result) || isArray(result)) {
           this.rpcData[method] = /**@type {JsonObject}*/ (result);
         } else {
           throw new Error("The rpc result is not an object.");

@@ -86,6 +86,14 @@ export function isObject(obj) {
 }
 
 /**
+ * @param {unknown} obj
+ * @returns {obj is unknown[]}
+ */
+export function isArray(obj) {
+  return Array.isArray(obj);
+}
+
+/**
  * @param {unknown} input
  * @returns {input is HTMLElement}
  */
