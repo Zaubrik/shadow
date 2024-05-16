@@ -268,7 +268,7 @@ export class Shadow extends HTMLElement {
           new CustomEvent("fetchError", {
             bubbles: true,
             composed: true,
-            detail: { response },
+            detail: response,
           }),
         );
         throw new Error(`Received http status code ${response.status}.`);
